@@ -17,6 +17,8 @@ RESET='\033[0m'
 # Configurações
 SCRIPT_PATH="./tiocambio.sh"
 TEMP_FILE="/tmp/tiocambio_tui_$$"
+SELECTED_CURRENCY=""
+KEY_PRESSED=""
 
 # Função para limpar a tela
 clear_screen() {
@@ -40,17 +42,25 @@ draw_bottom_border() {
     echo -e "╝${RESET}"
 }
 
-# Função para desenhar linha
+# Função para desenhar linha centralizada
 draw_line() {
     local text="$1"
     local width=${2:-80}
-    local text_length=${#text}
+
+    # Remove códigos ANSI para calcular tamanho real
+    local clean="$text"
+    while [[ "$clean" =~ $'\033'\[[0-9\;]*m ]]; do
+        clean="${clean//${BASH_REMATCH[0]}/}"
+    done
+
+    local text_length=${#clean}
     local padding=$(( (width - text_length - 2) / 2 ))
+    local right_padding=$(( width - text_length - padding - 2 ))
 
     echo -ne "${CYAN}║${RESET}"
-    for ((i=0; i<padding; i++)); do echo -n " "; done
+    printf '%*s' "$padding" ""
     echo -ne "$text"
-    for ((i=0; i<width-text_length-padding-2; i++)); do echo -n " "; done
+    printf '%*s' "$right_padding" ""
     echo -e "${CYAN}║${RESET}"
 }
 
@@ -116,29 +126,55 @@ draw_menu() {
     draw_empty_line 80
 }
 
-# Função para esperar tecla
-wait_key() {
-    local key
-    read -rsn1 key
+# Função para limpar buffer de entrada
+flush_input() {
+    while read -rsn1 -t 0.1 2>/dev/null; do :; done
+}
 
-    # Detectar setas
-    if [[ $key == $'\x1b' ]]; then
-        read -rsn2 key
-        case $key in
-            '[A') echo "up" ;;
-            '[B') echo "down" ;;
-            *) echo "esc" ;;
+# Função para ler tecla (usa variável global KEY_PRESSED)
+read_key() {
+    local key=""
+    KEY_PRESSED=""
+
+    # Ler primeiro caractere
+    IFS= read -rsn1 key
+
+    # Detectar ESC ou setas
+    if [[ "$key" == $'\x1b' ]]; then
+        # Ler sequência completa de 2 caracteres
+        local seq=""
+        IFS= read -rsn2 -t 0.5 seq 2>/dev/null
+
+        case "$seq" in
+            '[A'|'OA') KEY_PRESSED="up" ;;
+            '[B'|'OB') KEY_PRESSED="down" ;;
+            '[C'|'OC') KEY_PRESSED="right" ;;
+            '[D'|'OD') KEY_PRESSED="left" ;;
+            '') KEY_PRESSED="esc" ;;
+            *) KEY_PRESSED="esc" ;;
         esac
+    elif [[ "$key" == "" ]]; then
+        KEY_PRESSED="enter"
+    elif [[ "$key" == " " ]]; then
+        KEY_PRESSED="space"
+    elif [[ "$key" == "q" || "$key" == "Q" ]]; then
+        KEY_PRESSED="quit"
     else
-        echo "$key"
+        KEY_PRESSED="$key"
     fi
+}
+
+# Função para esperar tecla (mantida para compatibilidade)
+wait_key() {
+    read_key
+    echo "$KEY_PRESSED"
 }
 
 # Função para selecionar moeda
 select_currency() {
     local prompt="$1"
     local selected=0
-    local -a currencies=(
+    local currencies=(
         "🇧🇷 BRL - Real Brasileiro"
         "💵 USD - Dólar Americano"
         "💶 EUR - Euro"
@@ -152,8 +188,10 @@ select_currency() {
         "🇵🇾 PYG - Guarani Paraguaio"
         "₿  BTC - Bitcoin"
     )
+    local codes=("BRL" "USD" "EUR" "GBP" "JPY" "CNY" "CHF" "CAD" "AUD" "ARS" "PYG" "BTC")
 
-    local -a codes=("BRL" "USD" "EUR" "GBP" "JPY" "CNY" "CHF" "CAD" "AUD" "ARS" "PYG" "BTC")
+    SELECTED_CURRENCY=""
+    flush_input
 
     while true; do
         draw_header
@@ -172,9 +210,9 @@ select_currency() {
         draw_empty_line 80
         draw_footer
 
-        key=$(wait_key)
+        read_key
 
-        case $key in
+        case "$KEY_PRESSED" in
             up)
                 ((selected--))
                 [ $selected -lt 0 ] && selected=$((${#currencies[@]}-1))
@@ -183,17 +221,21 @@ select_currency() {
                 ((selected++))
                 [ $selected -ge ${#currencies[@]} ] && selected=0
                 ;;
-            ""|" ")
-                echo "${codes[$selected]}"
+            enter|space)
+                SELECTED_CURRENCY="${codes[$selected]}"
+                flush_input
                 return 0
                 ;;
-            [0-9])
-                if [ "$key" -ge 1 ] && [ "$key" -le ${#currencies[@]} ]; then
-                    echo "${codes[$((key-1))]}"
+            [1-9])
+                if [ "$KEY_PRESSED" -le ${#currencies[@]} ]; then
+                    SELECTED_CURRENCY="${codes[$((KEY_PRESSED-1))]}"
+                    flush_input
                     return 0
                 fi
                 ;;
-            q|esc)
+            quit|esc)
+                SELECTED_CURRENCY=""
+                flush_input
                 return 1
                 ;;
         esac
