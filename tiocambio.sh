@@ -23,6 +23,7 @@ show_help() {
     echo "  -aud         Cotações em relação ao Dólar Australiano"
     echo "  -ars         Cotações em relação ao Peso Argentino"
     echo "  -pyg         Cotações em relação ao Guarani Paraguaio"
+    echo "  -btc         Cotações em relação ao Bitcoin"
     echo ""
     echo "CONVERSÃO DE VALORES:"
     echo "  -brl <moeda> <valor>    Converte valor da moeda base para outra"
@@ -58,6 +59,7 @@ show_currency_menu() {
     echo "  9) 🇦🇺 AUD - Dólar Australiano"
     echo " 10) 🇦🇷 ARS - Peso Argentino"
     echo " 11) 🇵🇾 PYG - Guarani Paraguaio"
+    echo " 12) ₿  BTC - Bitcoin"
     echo "  0) ❌ Sair"
     echo ""
     echo -n "Digite o número da moeda: "
@@ -75,6 +77,7 @@ show_currency_menu() {
         9) BASE_CURRENCY="AUD" ;;
         10) BASE_CURRENCY="ARS" ;;
         11) BASE_CURRENCY="PYG" ;;
+        12) BASE_CURRENCY="BTC" ;;
         0) echo "Até logo!"; exit 0 ;;
         *) echo "❌ Opção inválida!"; exit 1 ;;
     esac
@@ -95,7 +98,31 @@ get_currency_info() {
         AUD) echo "Dólar Australiano|🇦🇺" ;;
         ARS) echo "Peso Argentino|🇦🇷" ;;
         PYG) echo "Guarani Paraguaio|🇵🇾" ;;
+        BTC) echo "Bitcoin|₿" ;;
     esac
+}
+
+# Função para obter cotação de Bitcoin
+get_btc_rate() {
+    local base_currency=$1
+
+    # Usa CoinGecko API para Bitcoin
+    response=$(curl -s "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=${base_currency}")
+
+    if [ $? -eq 0 ]; then
+        # Extrai o valor do JSON
+        rate=$(echo $response | grep -o "\"$(echo $base_currency | tr '[:upper:]' '[:lower:]')\":[0-9.]*" | cut -d':' -f2)
+
+        if [ -n "$rate" ]; then
+            base_info=$(get_currency_info $base_currency)
+            base_symbol=$(echo $base_info | cut -d'|' -f1)
+            echo "₿ 1 Bitcoin = ${rate} ${base_symbol}"
+        else
+            echo "❌ Erro ao obter cotação de Bitcoin"
+        fi
+    else
+        echo "❌ Erro de conexão ao buscar Bitcoin"
+    fi
 }
 
 # Função para obter cotação
@@ -104,6 +131,12 @@ get_exchange_rate() {
     local target_currency=$2
     local target_name=$3
     local emoji=$4
+
+    # Se o target for Bitcoin, usa função específica
+    if [ "$target_currency" = "BTC" ]; then
+        get_btc_rate "$base_currency"
+        return
+    fi
 
     # Busca a taxa inversa: quanto custa 1 unidade da moeda alvo na moeda base
     response=$(curl -s "https://api.exchangerate-api.com/v4/latest/${target_currency}")
@@ -137,6 +170,35 @@ convert_value() {
     to_name=$(echo $to_info | cut -d'|' -f1)
     to_emoji=$(echo $to_info | cut -d'|' -f2)
 
+    # Se envolver Bitcoin, usa CoinGecko API
+    if [ "$from" = "BTC" ] || [ "$to" = "BTC" ]; then
+        if [ "$from" = "BTC" ]; then
+            # Converte de BTC para outra moeda
+            response=$(curl -s "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=$(echo $to | tr '[:upper:]' '[:lower:]')")
+            rate=$(echo $response | grep -o "\"$(echo $to | tr '[:upper:]' '[:lower:]')\":[0-9.]*" | cut -d':' -f2)
+        else
+            # Converte de outra moeda para BTC
+            response=$(curl -s "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=$(echo $from | tr '[:upper:]' '[:lower:]')")
+            btc_rate=$(echo $response | grep -o "\"$(echo $from | tr '[:upper:]' '[:lower:]')\":[0-9.]*" | cut -d':' -f2)
+            if [ -n "$btc_rate" ]; then
+                rate=$(echo "scale=8; 1 / $btc_rate" | bc)
+            fi
+        fi
+
+        if [ -n "$rate" ]; then
+            if [ "$from" = "BTC" ]; then
+                result=$(echo "scale=2; $amount * $rate" | bc)
+            else
+                result=$(echo "scale=8; $amount * $rate" | bc)
+            fi
+            echo "$from_emoji $amount $from_name = $to_emoji $result $to_name"
+        else
+            echo "❌ Erro ao obter taxa de conversão"
+        fi
+        return
+    fi
+
+    # Conversão normal para moedas tradicionais
     response=$(curl -s "https://api.exchangerate-api.com/v4/latest/${from}")
 
     if [ $? -eq 0 ]; then
@@ -194,6 +256,11 @@ show_all_rates() {
         get_exchange_rate "$base_currency" "JPY" "Iene Japonês" "💴"
         get_exchange_rate "$base_currency" "CNY" "Yuan Chinês" "🇨🇳"
         get_exchange_rate "$base_currency" "AUD" "Dólar Australiano" "🇦🇺"
+
+        echo ""
+        echo "₿ CRIPTOMOEDAS"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        get_exchange_rate "$base_currency" "BTC" "Bitcoin" "₿"
     else
         # Para outras moedas base, mostrar todas as moedas
         echo "💰 PRINCIPAIS MOEDAS"
@@ -211,6 +278,7 @@ show_all_rates() {
         [ "$base_currency" != "AUD" ] && get_exchange_rate "$base_currency" "AUD" "Dólar Australiano" "🇦🇺"
         [ "$base_currency" != "ARS" ] && get_exchange_rate "$base_currency" "ARS" "Peso Argentino" "🇦🇷"
         [ "$base_currency" != "PYG" ] && get_exchange_rate "$base_currency" "PYG" "Guarani Paraguaio" "🇵🇾"
+        [ "$base_currency" != "BTC" ] && get_exchange_rate "$base_currency" "BTC" "Bitcoin" "₿"
     fi
 
     echo ""
@@ -320,6 +388,14 @@ case "$1" in
             convert_value "PYG" "$target_currency" "$3"
         else
             show_all_rates "PYG"
+        fi
+        ;;
+    -btc)
+        if [ -n "$2" ] && [ -n "$3" ]; then
+            target_currency=$(echo "$2" | tr '[:lower:]' '[:upper:]')
+            convert_value "BTC" "$target_currency" "$3"
+        else
+            show_all_rates "BTC"
         fi
         ;;
     *)

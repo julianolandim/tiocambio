@@ -1,6 +1,6 @@
-# 💰 Conversor de Moedas
+# 💰 Conversor de Moedas + Bitcoin
 
-Script multiplataforma para consultar cotações de moedas em tempo real e realizar conversões entre diferentes moedas e o Real Brasileiro (BRL).
+Script multiplataforma para consultar cotações de moedas e Bitcoin em tempo real. Realize conversões entre 11 moedas tradicionais e Bitcoin (BTC).
 
 **Disponível para:**
 - 🐧 Linux/macOS (Bash)
@@ -9,11 +9,12 @@ Script multiplataforma para consultar cotações de moedas em tempo real e reali
 ## 📋 Características
 
 - ✅ Consulta cotações em tempo real via API
-- ✅ Suporte para as principais moedas do mundo
+- ✅ Suporte para 12 moedas (11 tradicionais + Bitcoin)
 - ✅ Conversão bidirecional entre moedas
 - ✅ Interface visual com emojis
 - ✅ Organização por regiões geográficas
 - ✅ Cotação do dólar comercial e paralelo (turismo)
+- ✅ Cotação de Bitcoin (BTC) em tempo real
 - ✅ Sem necessidade de API key
 
 ## 🌍 Moedas Suportadas
@@ -34,6 +35,9 @@ Script multiplataforma para consultar cotações de moedas em tempo real e reali
 - **JPY** - Iene Japonês
 - **CNY** - Yuan Chinês
 - **AUD** - Dólar Australiano
+
+### ₿ Criptomoedas
+- **BTC** - Bitcoin
 
 ## 🚀 Instalação
 
@@ -149,6 +153,7 @@ Escolha a moeda base para ver as cotações:
   9) 🇦🇺 AUD - Dólar Australiano
  10) 🇦🇷 ARS - Peso Argentino
  11) 🇵🇾 PYG - Guarani Paraguaio
+ 12) ₿  BTC - Bitcoin
   0) ❌ Sair
 
 Digite o número da moeda:
@@ -198,6 +203,10 @@ Use a flag da moeda base para ver todas as cotações em relação a ela:
 💴 1 Iene Japonês = 0.034 Real Brasileiro
 🇨🇳 1 Yuan Chinês = 0.75 Real Brasileiro
 🇦🇺 1 Dólar Australiano = 3.51 Real Brasileiro
+
+₿ CRIPTOMOEDAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+₿ 1 Bitcoin = 491532 Real Brasileiro
 ```
 
 **Exemplo com `-usd` (quanto custam as moedas em Dólar):**
@@ -265,6 +274,7 @@ Você pode usar qualquer uma destas moedas como base:
 | `-aud` | Dólar Australiano | 🇦🇺 |
 | `-ars` | Peso Argentino | 🇦🇷 |
 | `-pyg` | Guarani Paraguaio | 🇵🇾 |
+| `-btc` | Bitcoin | ₿ |
 
 ### Como Usar as Moedas
 
@@ -289,20 +299,30 @@ Você pode usar qualquer uma destas moedas como base:
 ./tiocambio.sh -eur gbp 100    # EUR → GBP
 ./tiocambio.sh -gbp jpy 100    # GBP → JPY
 ./tiocambio.sh -cad aud 100    # CAD → AUD
+
+# Conversões com Bitcoin
+./tiocambio.sh -btc brl 0.01   # BTC → BRL
+./tiocambio.sh -brl btc 5000   # BRL → BTC
+./tiocambio.sh -usd btc 1000   # USD → BTC
 ```
 
 ## 🔧 APIs Utilizadas
 
-O script utiliza duas APIs públicas e gratuitas:
+O script utiliza três APIs públicas e gratuitas:
 
 1. **ExchangeRate-API** (https://exchangerate-api.com)
-   - Cotações oficiais das principais moedas
+   - Cotações oficiais das principais moedas tradicionais
    - Sem necessidade de registro ou API key
    - Atualização em tempo real
 
 2. **AwesomeAPI** (https://economia.awesomeapi.com.br)
    - Cotação do dólar paralelo/turismo brasileiro
    - API brasileira especializada em mercado financeiro
+
+3. **CoinGecko API** (https://www.coingecko.com)
+   - Cotações de Bitcoin em tempo real
+   - Suporte a múltiplas moedas fiat
+   - Gratuita e sem necessidade de API key
 
 ## 📝 Exemplos de Uso Prático
 
@@ -349,6 +369,22 @@ O script utiliza duas APIs públicas e gratuitas:
 ./tiocambio.sh -gbp jpy 1000
 ```
 
+### Investir em Bitcoin
+
+```bash
+# Ver cotação atual do Bitcoin em reais
+./tiocambio.sh -brl
+
+# Quanto custa 0.01 Bitcoin em reais?
+./tiocambio.sh -btc brl 0.01
+
+# Quantos Bitcoins posso comprar com 10000 reais?
+./tiocambio.sh -brl btc 10000
+
+# Ver todas as moedas em relação ao Bitcoin
+./tiocambio.sh -btc
+```
+
 ## 🤝 Contribuindo
 
 Contribuições são bem-vindas! Sinta-se à vontade para:
@@ -360,11 +396,13 @@ Contribuições são bem-vindas! Sinta-se à vontade para:
 5. Abrir um Pull Request
 
 ### Ideias para contribuição:
-- Adicionar mais moedas
+- Adicionar mais criptomoedas (Ethereum, Litecoin, etc.)
+- Adicionar mais moedas tradicionais
 - Implementar cache de cotações
 - Adicionar gráficos de histórico
 - Criar interface gráfica (GUI)
 - Adicionar notificações de variação cambial
+- Adicionar alertas de preço para Bitcoin
 
 ## 📄 Licença
 
@@ -376,7 +414,7 @@ Este script fornece cotações de moedas apenas para fins informativos. As taxas
 
 ## 👤 Autor
 
-Desenvolvido por Juliano Albuquerque Landim - Empresa JAL Softwares
+Desenvolvido por [Seu Nome]
 
 ## 🌟 Mostre seu apoio
 
@@ -384,8 +422,8 @@ Se este projeto foi útil para você, considere dar uma ⭐️ no repositório!
 
 ## 📞 Contato
 
-- GitHub: [@julianolandim](https://github.com/julianolandim)
-- Email: ibgguaira@gmail.com
+- GitHub: [@seu-usuario](https://github.com/seu-usuario)
+- Email: seu-email@exemplo.com
 
 ---
 
