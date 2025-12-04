@@ -105,8 +105,3 @@ yarn-error.log*
 
 # Processos em background
 *.pid
-
-# Scripts de teste
-test_keys.sh
-test_alignment.sh
-test_simple.sh
