@@ -376,7 +376,7 @@ Este script fornece cotações de moedas apenas para fins informativos. As taxas
 
 ## 👤 Autor
 
-Desenvolvido por [Seu Nome]
+Desenvolvido por Juliano Albuquerque Landim - Empresa JAL Softwares
 
 ## 🌟 Mostre seu apoio
 
@@ -384,8 +384,8 @@ Se este projeto foi útil para você, considere dar uma ⭐️ no repositório!
 
 ## 📞 Contato
 
-- GitHub: [@seu-usuario](https://github.com/seu-usuario)
-- Email: seu-email@exemplo.com
+- GitHub: [@julianolandim](https://github.com/julianolandim)
+- Email: ibgguaira@gmail.com
 
 ---
 
