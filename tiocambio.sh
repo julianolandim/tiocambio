@@ -28,12 +28,21 @@ show_help() {
     echo "CONVERSÃO DE VALORES:"
     echo "  -brl <moeda> <valor>    Converte valor da moeda base para outra"
     echo ""
+    echo "ALERTAS DE PREÇO:"
+    echo "  --btc-alert <moeda> <valor_min> <valor_max>  Monitora preço do Bitcoin"
+    echo "      Exemplo: $0 --btc-alert brl 450000 500000"
+    echo "  --alert <moeda_origem> <moeda_destino> <valor_min> <valor_max>"
+    echo "      Monitora qualquer conversão de moeda"
+    echo "      Exemplo: $0 --alert usd brl 5.0 5.5"
+    echo "      (Alerta quando 1 USD estiver entre R$ 5.00 e R$ 5.50)"
+    echo ""
     echo "Exemplos:"
     echo "  $0 -brl                 # Mostra todas as cotações em relação ao Real"
     echo "  $0 -usd                 # Mostra todas as cotações em relação ao Dólar"
     echo "  $0 -brl usd 100         # Converte 100 Reais para Dólares"
     echo "  $0 -usd brl 50          # Converte 50 Dólares para Reais"
     echo "  $0 -eur gbp 200         # Converte 200 Euros para Libras"
+    echo "  $0 --btc-alert brl 480000 520000  # Alerta de Bitcoin"
     echo ""
     echo "  -h, --help              Mostra esta ajuda"
     echo ""
@@ -213,6 +222,142 @@ convert_value() {
     else
         echo "❌ Erro de conexão"
     fi
+}
+
+# Função para monitorar preço do Bitcoin
+btc_price_alert() {
+    local currency=$1
+    local min_price=$2
+    local max_price=$3
+    local interval=60  # Intervalo de 60 segundos entre verificações
+
+    currency_upper=$(echo "$currency" | tr '[:lower:]' '[:upper:]')
+    currency_info=$(get_currency_info $currency_upper)
+    currency_name=$(echo $currency_info | cut -d'|' -f1)
+    currency_emoji=$(echo $currency_info | cut -d'|' -f2)
+
+    echo "=========================================="
+    echo "₿  ALERTA DE PREÇO DO BITCOIN"
+    echo "=========================================="
+    echo ""
+    echo "Moeda: $currency_emoji $currency_name"
+    echo "Faixa de alerta: $min_price - $max_price"
+    echo "Intervalo de verificação: ${interval}s"
+    echo ""
+    echo "Pressione Ctrl+C para parar o monitoramento"
+    echo "=========================================="
+    echo ""
+
+    # Loop infinito de monitoramento
+    while true; do
+        # Busca preço atual do Bitcoin
+        response=$(curl -s "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=$(echo $currency_upper | tr '[:upper:]' '[:lower:]')")
+        current_price=$(echo $response | grep -o "\"$(echo $currency_upper | tr '[:upper:]' '[:lower:]')\":[0-9.]*" | cut -d':' -f2)
+
+        if [ -n "$current_price" ]; then
+            timestamp=$(date '+%d/%m/%Y %H:%M:%S')
+
+            # Converte para inteiro para comparação (remove decimais)
+            current_int=$(echo $current_price | cut -d'.' -f1)
+
+            # Verifica se está dentro da faixa
+            if [ "$current_int" -ge "$min_price" ] && [ "$current_int" -le "$max_price" ]; then
+                echo "🔔 [$timestamp] ALERTA! Bitcoin: $currency_emoji $current_price $currency_name (DENTRO DA FAIXA)"
+                # Emite beep (se suportado pelo terminal)
+                printf '\a'
+            else
+                if [ "$current_int" -lt "$min_price" ]; then
+                    status="ABAIXO"
+                else
+                    status="ACIMA"
+                fi
+                echo "⏱️  [$timestamp] Bitcoin: $currency_emoji $current_price $currency_name ($status da faixa)"
+            fi
+        else
+            echo "❌ [$timestamp] Erro ao obter cotação do Bitcoin"
+        fi
+
+        # Aguarda antes da próxima verificação
+        sleep $interval
+    done
+}
+
+# Função para monitorar conversão entre duas moedas
+currency_pair_alert() {
+    local from_currency=$1
+    local to_currency=$2
+    local min_price=$3
+    local max_price=$4
+    local interval=60  # Intervalo de 60 segundos entre verificações
+
+    from_upper=$(echo "$from_currency" | tr '[:lower:]' '[:upper:]')
+    to_upper=$(echo "$to_currency" | tr '[:lower:]' '[:upper:]')
+
+    from_info=$(get_currency_info $from_upper)
+    to_info=$(get_currency_info $to_upper)
+
+    from_name=$(echo $from_info | cut -d'|' -f1)
+    from_emoji=$(echo $from_info | cut -d'|' -f2)
+    to_name=$(echo $to_info | cut -d'|' -f1)
+    to_emoji=$(echo $to_info | cut -d'|' -f2)
+
+    echo "=========================================="
+    echo "💱  ALERTA DE CONVERSÃO DE MOEDAS"
+    echo "=========================================="
+    echo ""
+    echo "Conversão: $from_emoji $from_name → $to_emoji $to_name"
+    echo "Faixa de alerta: $min_price - $max_price"
+    echo "Intervalo de verificação: ${interval}s"
+    echo ""
+    echo "Pressione Ctrl+C para parar o monitoramento"
+    echo "=========================================="
+    echo ""
+
+    # Loop infinito de monitoramento
+    while true; do
+        timestamp=$(date '+%d/%m/%Y %H:%M:%S')
+
+        # Busca taxa de conversão
+        if [ "$from_upper" = "BTC" ] || [ "$to_upper" = "BTC" ]; then
+            # Conversão envolvendo Bitcoin
+            if [ "$from_upper" = "BTC" ]; then
+                response=$(curl -s "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=$(echo $to_upper | tr '[:upper:]' '[:lower:]')")
+                current_rate=$(echo $response | grep -o "\"$(echo $to_upper | tr '[:upper:]' '[:lower:]')\":[0-9.]*" | cut -d':' -f2)
+            else
+                response=$(curl -s "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=$(echo $from_upper | tr '[:upper:]' '[:lower:]')")
+                btc_rate=$(echo $response | grep -o "\"$(echo $from_upper | tr '[:upper:]' '[:lower:]')\":[0-9.]*" | cut -d':' -f2)
+                if [ -n "$btc_rate" ]; then
+                    current_rate=$(echo "scale=8; 1 / $btc_rate" | bc)
+                fi
+            fi
+        else
+            # Conversão normal entre moedas tradicionais
+            response=$(curl -s "https://api.exchangerate-api.com/v4/latest/${from_upper}")
+            current_rate=$(echo $response | grep -o "\"${to_upper}\":[0-9.]*" | cut -d':' -f2)
+        fi
+
+        if [ -n "$current_rate" ]; then
+            # Para comparação, pega apenas a parte inteira ou converte para escala comparável
+            # Usa bc para comparação com decimais
+            if [ "$(echo "$current_rate >= $min_price" | bc)" -eq 1 ] && [ "$(echo "$current_rate <= $max_price" | bc)" -eq 1 ]; then
+                echo "🔔 [$timestamp] ALERTA! 1 $from_emoji $from_upper = $to_emoji $current_rate $to_upper (DENTRO DA FAIXA)"
+                # Emite beep (se suportado pelo terminal)
+                printf '\a'
+            else
+                if [ "$(echo "$current_rate < $min_price" | bc)" -eq 1 ]; then
+                    status="ABAIXO"
+                else
+                    status="ACIMA"
+                fi
+                echo "⏱️  [$timestamp] 1 $from_emoji $from_upper = $to_emoji $current_rate $to_upper ($status da faixa)"
+            fi
+        else
+            echo "❌ [$timestamp] Erro ao obter taxa de conversão"
+        fi
+
+        # Aguarda antes da próxima verificação
+        sleep $interval
+    done
 }
 
 # Função para mostrar todas as cotações em relação à moeda base
@@ -397,6 +542,23 @@ case "$1" in
         else
             show_all_rates "BTC"
         fi
+        ;;
+    --btc-alert)
+        if [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ]; then
+            echo "❌ Erro: Uso correto: $0 --btc-alert <moeda> <valor_min> <valor_max>"
+            echo "Exemplo: $0 --btc-alert brl 450000 500000"
+            exit 1
+        fi
+        btc_price_alert "$2" "$3" "$4"
+        ;;
+    --alert)
+        if [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ] || [ -z "$5" ]; then
+            echo "❌ Erro: Uso correto: $0 --alert <moeda_origem> <moeda_destino> <valor_min> <valor_max>"
+            echo "Exemplo: $0 --alert usd brl 5.0 5.5"
+            echo "         (Alerta quando 1 USD estiver entre R$ 5.00 e R$ 5.50)"
+            exit 1
+        fi
+        currency_pair_alert "$2" "$3" "$4" "$5"
         ;;
     *)
         echo "❌ Opção inválida: $1"

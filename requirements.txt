@@ -1,0 +1,10 @@
+# Requisitos para a GUI do Tio Câmbio
+#
+# A biblioteca tkinter geralmente já vem com Python
+# Se não estiver disponível, instale usando seu gerenciador de pacotes do sistema:
+#
+# macOS: brew install python-tk@3.12
+# Ubuntu/Debian: sudo apt-get install python3-tk
+# Fedora/Red Hat: sudo dnf install python3-tkinter
+#
+# Não há dependências Python adicionais necessárias
