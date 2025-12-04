@@ -26,6 +26,20 @@ clear_screen() {
     tput cup 0 0
 }
 
+# Função para remover códigos ANSI e calcular tamanho real do texto
+strip_ansi() {
+    local text="$1"
+    # Remove códigos de escape ANSI
+    echo "$text" | sed -E 's/\x1b\[[0-9;]*m//g'
+}
+
+# Função para calcular comprimento visual do texto (sem códigos ANSI)
+visual_length() {
+    local text="$1"
+    local clean=$(strip_ansi "$text")
+    echo "${#clean}"
+}
+
 # Função para desenhar borda superior
 draw_top_border() {
     local width=${1:-80}
@@ -42,17 +56,18 @@ draw_bottom_border() {
     echo -e "╝${RESET}"
 }
 
-# Função para desenhar linha
+# Função para desenhar linha centralizada
 draw_line() {
     local text="$1"
     local width=${2:-80}
-    local text_length=${#text}
+    local text_length=$(visual_length "$text")
     local padding=$(( (width - text_length - 2) / 2 ))
+    local right_padding=$(( width - text_length - padding - 2 ))
 
     echo -ne "${CYAN}║${RESET}"
-    for ((i=0; i<padding; i++)); do echo -n " "; done
+    printf '%*s' "$padding" ""
     echo -ne "$text"
-    for ((i=0; i<width-text_length-padding-2; i++)); do echo -n " "; done
+    printf '%*s' "$right_padding" ""
     echo -e "${CYAN}║${RESET}"
 }
 
@@ -126,17 +141,32 @@ flush_input() {
 # Função para ler tecla (usa variável global KEY_PRESSED)
 read_key() {
     local key
+    local key2
+    local key3
     KEY_PRESSED=""
 
+    # Ler primeiro caractere
     IFS= read -rsn1 key
 
+    # Detectar ESC ou setas
     if [[ "$key" == $'\x1b' ]]; then
-        read -rsn2 -t 0.1 key 2>/dev/null
-        case "$key" in
-            '[A') KEY_PRESSED="up" ;;
-            '[B') KEY_PRESSED="down" ;;
-            *) KEY_PRESSED="esc" ;;
-        esac
+        # Ler próximos 2 caracteres com timeout maior
+        IFS= read -rsn1 -t 0.3 key2 2>/dev/null
+        IFS= read -rsn1 -t 0.3 key3 2>/dev/null
+
+        # Se conseguiu ler os 2 caracteres, é uma tecla de seta
+        if [[ -n "$key2" && -n "$key3" ]]; then
+            case "${key2}${key3}" in
+                '[A') KEY_PRESSED="up" ;;
+                '[B') KEY_PRESSED="down" ;;
+                '[C') KEY_PRESSED="right" ;;
+                '[D') KEY_PRESSED="left" ;;
+                *) KEY_PRESSED="esc" ;;
+            esac
+        else
+            # ESC puro
+            KEY_PRESSED="esc"
+        fi
     elif [[ "$key" == "" ]]; then
         KEY_PRESSED="enter"
     elif [[ "$key" == " " ]]; then
