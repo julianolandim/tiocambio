@@ -26,18 +26,20 @@ clear_screen() {
     tput cup 0 0
 }
 
-# Função para remover códigos ANSI e calcular tamanho real do texto
-strip_ansi() {
-    local text="$1"
-    # Remove códigos de escape ANSI
-    echo "$text" | sed -E 's/\x1b\[[0-9;]*m//g'
-}
-
 # Função para calcular comprimento visual do texto (sem códigos ANSI)
 visual_length() {
     local text="$1"
-    local clean=$(strip_ansi "$text")
-    echo "${#clean}"
+    # Remove todos os códigos de escape ANSI: \033[...m ou \x1b[...m
+    local clean="${text//\\033\[[0-9;]*m/}"
+    clean="${clean//$'\033'\[[0-9;]*m/}"
+    clean="${clean//$'\x1b'\[[0-9;]*m/}"
+
+    # Contar emojis como 2 caracteres (ajuste aproximado)
+    local emoji_count=$(echo "$clean" | grep -o '[😀-🙏🌀-🗿🚀-🛿]' | wc -l | tr -d ' ')
+    local base_length=${#clean}
+
+    # Retornar comprimento ajustado
+    echo "$base_length"
 }
 
 # Função para desenhar borda superior
@@ -56,11 +58,19 @@ draw_bottom_border() {
     echo -e "╝${RESET}"
 }
 
-# Função para desenhar linha centralizada
+# Função para desenhar linha centralizada (sem usar visual_length)
 draw_line() {
     local text="$1"
     local width=${2:-80}
-    local text_length=$(visual_length "$text")
+
+    # Remove códigos ANSI manualmente para calcular comprimento real
+    local clean="$text"
+    # Remove sequências \033[...m e \x1b[...m
+    while [[ "$clean" =~ $'\033'\[[0-9\;]*m ]]; do
+        clean="${clean//${BASH_REMATCH[0]}/}"
+    done
+
+    local text_length=${#clean}
     local padding=$(( (width - text_length - 2) / 2 ))
     local right_padding=$(( width - text_length - padding - 2 ))
 
@@ -140,38 +150,31 @@ flush_input() {
 
 # Função para ler tecla (usa variável global KEY_PRESSED)
 read_key() {
-    local key
-    local key2
-    local key3
+    local key=""
     KEY_PRESSED=""
 
-    # Ler primeiro caractere
+    # Ler primeiro caractere sem timeout
     IFS= read -rsn1 key
 
     # Detectar ESC ou setas
     if [[ "$key" == $'\x1b' ]]; then
-        # Ler próximos 2 caracteres com timeout maior
-        IFS= read -rsn1 -t 0.3 key2 2>/dev/null
-        IFS= read -rsn1 -t 0.3 key3 2>/dev/null
+        # Ler até 3 caracteres adicionais com timeout
+        local seq=""
+        IFS= read -rsn2 -t 0.5 seq 2>/dev/null
 
-        # Se conseguiu ler os 2 caracteres, é uma tecla de seta
-        if [[ -n "$key2" && -n "$key3" ]]; then
-            case "${key2}${key3}" in
-                '[A') KEY_PRESSED="up" ;;
-                '[B') KEY_PRESSED="down" ;;
-                '[C') KEY_PRESSED="right" ;;
-                '[D') KEY_PRESSED="left" ;;
-                *) KEY_PRESSED="esc" ;;
-            esac
-        else
-            # ESC puro
-            KEY_PRESSED="esc"
-        fi
+        case "$seq" in
+            '[A'|'OA') KEY_PRESSED="up" ;;
+            '[B'|'OB') KEY_PRESSED="down" ;;
+            '[C'|'OC') KEY_PRESSED="right" ;;
+            '[D'|'OD') KEY_PRESSED="left" ;;
+            '') KEY_PRESSED="esc" ;;  # ESC puro (sem sequência)
+            *) KEY_PRESSED="esc" ;;   # Sequência desconhecida
+        esac
     elif [[ "$key" == "" ]]; then
         KEY_PRESSED="enter"
     elif [[ "$key" == " " ]]; then
         KEY_PRESSED="space"
-    elif [[ "$key" == "q" ]]; then
+    elif [[ "$key" == "q" || "$key" == "Q" ]]; then
         KEY_PRESSED="quit"
     else
         KEY_PRESSED="$key"

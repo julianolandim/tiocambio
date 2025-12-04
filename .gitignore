@@ -109,3 +109,4 @@ yarn-error.log*
 # Scripts de teste
 test_keys.sh
 test_alignment.sh
+test_simple.sh
