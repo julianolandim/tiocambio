@@ -17,8 +17,6 @@ RESET='\033[0m'
 # Configurações
 SCRIPT_PATH="./tiocambio.sh"
 TEMP_FILE="/tmp/tiocambio_tui_$$"
-SELECTED_CURRENCY=""
-KEY_PRESSED=""
 
 # Função para limpar a tela
 clear_screen() {
@@ -42,7 +40,7 @@ draw_bottom_border() {
     echo -e "╝${RESET}"
 }
 
-# Função para desenhar linha centralizada
+# Função para desenhar linha
 draw_line() {
     local text="$1"
     local width=${2:-80}
@@ -53,7 +51,7 @@ draw_line() {
         clean="${clean//${BASH_REMATCH[0]}/}"
     done
 
-    # Usar printf para obter largura visual real (funciona com emojis)
+    # Usar printf para obter largura visual real
     local visual_width=$(printf "%s" "$clean" | wc -m | tr -d ' ')
 
     local padding=$(( (width - visual_width - 2) / 2 ))
@@ -132,61 +130,29 @@ draw_menu() {
     draw_empty_line 80
 }
 
-# Função para limpar buffer de entrada
-flush_input() {
-    while read -rsn1 -t 0.1 2>/dev/null; do :; done
-}
-
-# Função para ler tecla (usa variável global KEY_PRESSED)
-read_key() {
-    local key=""
-    local seq=""
-    KEY_PRESSED=""
-
-    # Ler até 3 caracteres (ESC + sequência)
-    IFS= read -rsn1 key
-
-    # Se for ESC, ler os próximos 2 caracteres juntos
-    if [[ "$key" == $'\x1b' ]]; then
-        # Ler 2 caracteres de uma vez com timeout maior
-        IFS= read -rsn2 -t 1 seq 2>/dev/null
-
-        # Processar sequência completa
-        case "$seq" in
-            '[A'|'OA') KEY_PRESSED="up" ;;
-            '[B'|'OB') KEY_PRESSED="down" ;;
-            '[C'|'OC') KEY_PRESSED="right" ;;
-            '[D'|'OD') KEY_PRESSED="left" ;;
-            '[3~') KEY_PRESSED="delete" ;;
-            '[H') KEY_PRESSED="home" ;;
-            '[F') KEY_PRESSED="end" ;;
-            *)
-                # Se não conseguiu ler 2 chars, é ESC puro
-                KEY_PRESSED="esc"
-                ;;
-        esac
-    elif [[ "$key" == "" ]]; then
-        KEY_PRESSED="enter"
-    elif [[ "$key" == " " ]]; then
-        KEY_PRESSED="space"
-    elif [[ "$key" == "q" || "$key" == "Q" ]]; then
-        KEY_PRESSED="quit"
-    else
-        KEY_PRESSED="$key"
-    fi
-}
-
-# Função para esperar tecla (mantida para compatibilidade)
+# Função para esperar tecla
 wait_key() {
-    read_key
-    echo "$KEY_PRESSED"
+    local key
+    read -rsn1 key
+
+    # Detectar setas
+    if [[ $key == $'\x1b' ]]; then
+        read -rsn2 key
+        case $key in
+            '[A') echo "up" ;;
+            '[B') echo "down" ;;
+            *) echo "esc" ;;
+        esac
+    else
+        echo "$key"
+    fi
 }
 
 # Função para selecionar moeda
 select_currency() {
     local prompt="$1"
     local selected=0
-    local currencies=(
+    local -a currencies=(
         "🇧🇷 BRL - Real Brasileiro"
         "💵 USD - Dólar Americano"
         "💶 EUR - Euro"
@@ -200,10 +166,8 @@ select_currency() {
         "🇵🇾 PYG - Guarani Paraguaio"
         "₿  BTC - Bitcoin"
     )
-    local codes=("BRL" "USD" "EUR" "GBP" "JPY" "CNY" "CHF" "CAD" "AUD" "ARS" "PYG" "BTC")
 
-    SELECTED_CURRENCY=""
-    flush_input
+    local -a codes=("BRL" "USD" "EUR" "GBP" "JPY" "CNY" "CHF" "CAD" "AUD" "ARS" "PYG" "BTC")
 
     while true; do
         draw_header
@@ -222,9 +186,9 @@ select_currency() {
         draw_empty_line 80
         draw_footer
 
-        read_key
+        key=$(wait_key)
 
-        case "$KEY_PRESSED" in
+        case $key in
             up)
                 ((selected--))
                 [ $selected -lt 0 ] && selected=$((${#currencies[@]}-1))
@@ -233,21 +197,17 @@ select_currency() {
                 ((selected++))
                 [ $selected -ge ${#currencies[@]} ] && selected=0
                 ;;
-            enter|space)
-                SELECTED_CURRENCY="${codes[$selected]}"
-                flush_input
+            ""|" ")
+                echo "${codes[$selected]}"
                 return 0
                 ;;
-            [1-9])
-                if [ "$KEY_PRESSED" -le ${#currencies[@]} ]; then
-                    SELECTED_CURRENCY="${codes[$((KEY_PRESSED-1))]}"
-                    flush_input
+            [0-9])
+                if [ "$key" -ge 1 ] && [ "$key" -le ${#currencies[@]} ]; then
+                    echo "${codes[$((key-1))]}"
                     return 0
                 fi
                 ;;
-            quit|esc)
-                SELECTED_CURRENCY=""
-                flush_input
+            q|esc)
                 return 1
                 ;;
         esac
@@ -256,12 +216,11 @@ select_currency() {
 
 # Função para mostrar cotações
 show_quotes() {
-    select_currency "Selecione a moeda base:"
-    if [ $? -ne 0 ] || [ -z "$SELECTED_CURRENCY" ]; then
+    local base_currency=$(select_currency "Selecione a moeda base:")
+
+    if [ $? -ne 0 ]; then
         return
     fi
-
-    local base_currency="$SELECTED_CURRENCY"
 
     draw_header
     draw_empty_line 80
@@ -296,21 +255,18 @@ show_quotes() {
     draw_empty_line 80
     draw_bottom_border 80
 
-    flush_input
     read -rsn1
 }
 
 # Função para converter moedas
 convert_currency() {
     # Selecionar moeda de origem
-    select_currency "Selecione a moeda DE (origem):"
-    if [ $? -ne 0 ] || [ -z "$SELECTED_CURRENCY" ]; then return; fi
-    local from_currency="$SELECTED_CURRENCY"
+    local from_currency=$(select_currency "Selecione a moeda DE (origem):")
+    if [ $? -ne 0 ]; then return; fi
 
     # Selecionar moeda de destino
-    select_currency "Selecione a moeda PARA (destino):"
-    if [ $? -ne 0 ] || [ -z "$SELECTED_CURRENCY" ]; then return; fi
-    local to_currency="$SELECTED_CURRENCY"
+    local to_currency=$(select_currency "Selecione a moeda PARA (destino):")
+    if [ $? -ne 0 ]; then return; fi
 
     # Pedir valor
     draw_header
@@ -321,7 +277,6 @@ convert_currency() {
     draw_empty_line 80
     draw_bottom_border 80
 
-    flush_input
     echo -ne "\n${YELLOW}Valor: ${WHITE}"
     read amount
     echo -ne "${RESET}"
@@ -335,7 +290,6 @@ convert_currency() {
         draw_line "${WHITE}Pressione qualquer tecla para continuar...${RESET}" 80
         draw_empty_line 80
         draw_bottom_border 80
-        flush_input
         read -rsn1
         return
     fi
@@ -362,7 +316,6 @@ convert_currency() {
     draw_empty_line 80
     draw_bottom_border 80
 
-    flush_input
     read -rsn1
 }
 
@@ -389,9 +342,9 @@ configure_alert() {
         draw_empty_line 80
         draw_footer
 
-        read_key
+        key=$(wait_key)
 
-        case "$KEY_PRESSED" in
+        case $key in
             up)
                 ((selected--))
                 [ $selected -lt 0 ] && selected=$((${#options[@]}-1))
@@ -400,15 +353,14 @@ configure_alert() {
                 ((selected++))
                 [ $selected -ge ${#options[@]} ] && selected=0
                 ;;
-            enter|space)
-                flush_input
+            ""|" ")
                 case $selected in
                     0) configure_pair_alert ;;
                     1) configure_btc_alert ;;
                     2) return ;;
                 esac
                 ;;
-            quit|esc)
+            q|esc)
                 return
                 ;;
         esac
@@ -417,13 +369,11 @@ configure_alert() {
 
 # Função para configurar alerta de par de moedas
 configure_pair_alert() {
-    select_currency "Selecione a moeda DE (origem):"
-    if [ $? -ne 0 ] || [ -z "$SELECTED_CURRENCY" ]; then return; fi
-    local from_currency="$SELECTED_CURRENCY"
+    local from_currency=$(select_currency "Selecione a moeda DE (origem):")
+    if [ $? -ne 0 ]; then return; fi
 
-    select_currency "Selecione a moeda PARA (destino):"
-    if [ $? -ne 0 ] || [ -z "$SELECTED_CURRENCY" ]; then return; fi
-    local to_currency="$SELECTED_CURRENCY"
+    local to_currency=$(select_currency "Selecione a moeda PARA (destino):")
+    if [ $? -ne 0 ]; then return; fi
 
     # Pedir valores
     draw_header
@@ -476,9 +426,8 @@ configure_pair_alert() {
 
 # Função para configurar alerta de Bitcoin
 configure_btc_alert() {
-    select_currency "Selecione a moeda para monitorar Bitcoin:"
-    if [ $? -ne 0 ] || [ -z "$SELECTED_CURRENCY" ]; then return; fi
-    local currency="$SELECTED_CURRENCY"
+    local currency=$(select_currency "Selecione a moeda para monitorar Bitcoin:")
+    if [ $? -ne 0 ]; then return; fi
 
     draw_header
     draw_empty_line 80
@@ -602,14 +551,13 @@ main_menu() {
     local total_options=6
 
     while true; do
-        flush_input
         draw_header
         draw_menu $selected
         draw_footer
 
-        read_key
+        key=$(wait_key)
 
-        case "$KEY_PRESSED" in
+        case $key in
             up)
                 ((selected--))
                 [ $selected -lt 0 ] && selected=$((total_options-1))
@@ -618,8 +566,7 @@ main_menu() {
                 ((selected++))
                 [ $selected -ge $total_options ] && selected=0
                 ;;
-            enter|space)
-                flush_input
+            ""|" ")
                 case $selected in
                     0) show_quotes ;;
                     1) convert_currency ;;
@@ -634,8 +581,7 @@ main_menu() {
                 esac
                 ;;
             [1-6])
-                flush_input
-                case "$KEY_PRESSED" in
+                case $key in
                     1) show_quotes ;;
                     2) convert_currency ;;
                     3) configure_alert ;;
@@ -648,7 +594,7 @@ main_menu() {
                         ;;
                 esac
                 ;;
-            quit|esc)
+            q|esc)
                 clear_screen
                 echo -e "${GREEN}Obrigado por usar o Tio Câmbio!${RESET}"
                 exit 0
