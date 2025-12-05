@@ -53,9 +53,17 @@ draw_line() {
         clean="${clean//${BASH_REMATCH[0]}/}"
     done
 
+    # Contar emojis (cada emoji ocupa ~2 espaços visuais)
+    local emoji_count=$(echo -n "$clean" | grep -o '[🇧🇷💵💶💷💴🇨🇳🇨🇭🇨🇦🇦🇺🇦🇷🇵🇾₿📊💱🔔📈❓❌💰▶]' | wc -l | tr -d ' ')
+
+    # Comprimento base da string
     local text_length=${#clean}
-    local padding=$(( (width - text_length - 2) / 2 ))
-    local right_padding=$(( width - text_length - padding - 2 ))
+
+    # Ajustar comprimento visual (emoji conta como 2 mas ocupa 1 char na string)
+    local visual_length=$((text_length + emoji_count))
+
+    local padding=$(( (width - visual_length - 2) / 2 ))
+    local right_padding=$(( width - visual_length - padding - 2 ))
 
     echo -ne "${CYAN}║${RESET}"
     printf '%*s' "$padding" ""
@@ -141,14 +149,14 @@ read_key() {
 
     # Detectar ESC ou setas
     if [[ "$key" == $'\x1b' ]]; then
-        # Ler próximo byte individualmente
+        # Ler próximo byte - AUMENTAR TIMEOUT para macOS
         local seq1=""
-        IFS= read -rsn1 -t 0.1 seq1 2>/dev/null
+        IFS= read -rsn1 -t 0.5 seq1 2>/dev/null
 
         if [[ "$seq1" == "[" ]]; then
-            # Ler terceiro byte (A, B, C, D)
+            # Ler terceiro byte (A, B, C, D) - AUMENTAR TIMEOUT
             local seq2=""
-            IFS= read -rsn1 -t 0.1 seq2 2>/dev/null
+            IFS= read -rsn1 -t 0.5 seq2 2>/dev/null
 
             case "$seq2" in
                 'A') KEY_PRESSED="up" ;;
@@ -160,7 +168,7 @@ read_key() {
         elif [[ "$seq1" == "O" ]]; then
             # Ler terceiro byte (A, B, C, D) - modo alternativo
             local seq2=""
-            IFS= read -rsn1 -t 0.1 seq2 2>/dev/null
+            IFS= read -rsn1 -t 0.5 seq2 2>/dev/null
 
             case "$seq2" in
                 'A') KEY_PRESSED="up" ;;
