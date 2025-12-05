@@ -141,18 +141,38 @@ read_key() {
 
     # Detectar ESC ou setas
     if [[ "$key" == $'\x1b' ]]; then
-        # Ler sequência completa de 2 caracteres
-        local seq=""
-        IFS= read -rsn2 -t 0.5 seq 2>/dev/null
+        # Ler próximo byte individualmente
+        local seq1=""
+        IFS= read -rsn1 -t 0.1 seq1 2>/dev/null
 
-        case "$seq" in
-            '[A'|'OA') KEY_PRESSED="up" ;;
-            '[B'|'OB') KEY_PRESSED="down" ;;
-            '[C'|'OC') KEY_PRESSED="right" ;;
-            '[D'|'OD') KEY_PRESSED="left" ;;
-            '') KEY_PRESSED="esc" ;;
-            *) KEY_PRESSED="esc" ;;
-        esac
+        if [[ "$seq1" == "[" ]]; then
+            # Ler terceiro byte (A, B, C, D)
+            local seq2=""
+            IFS= read -rsn1 -t 0.1 seq2 2>/dev/null
+
+            case "$seq2" in
+                'A') KEY_PRESSED="up" ;;
+                'B') KEY_PRESSED="down" ;;
+                'C') KEY_PRESSED="right" ;;
+                'D') KEY_PRESSED="left" ;;
+                *) KEY_PRESSED="esc" ;;
+            esac
+        elif [[ "$seq1" == "O" ]]; then
+            # Ler terceiro byte (A, B, C, D) - modo alternativo
+            local seq2=""
+            IFS= read -rsn1 -t 0.1 seq2 2>/dev/null
+
+            case "$seq2" in
+                'A') KEY_PRESSED="up" ;;
+                'B') KEY_PRESSED="down" ;;
+                'C') KEY_PRESSED="right" ;;
+                'D') KEY_PRESSED="left" ;;
+                *) KEY_PRESSED="esc" ;;
+            esac
+        else
+            # ESC puro
+            KEY_PRESSED="esc"
+        fi
     elif [[ "$key" == "" ]]; then
         KEY_PRESSED="enter"
     elif [[ "$key" == " " ]]; then
