@@ -18,6 +18,10 @@ RESET='\033[0m'
 SCRIPT_PATH="./tiocambio.sh"
 TEMP_FILE="/tmp/tiocambio_tui_$$"
 
+# Variáveis globais
+SELECTED_CURRENCY=""
+KEY_PRESSED=""
+
 # Função para limpar a tela
 clear_screen() {
     clear
@@ -40,31 +44,30 @@ draw_bottom_border() {
     echo -e "╝${RESET}"
 }
 
-# Função para desenhar linha
+# Função para desenhar linha - SOLUÇÃO FINAL: printf com largura fixa
 draw_line() {
     local text="$1"
     local width=${2:-80}
 
-    # Remove códigos ANSI para calcular tamanho real
-    local clean="$text"
-    while [[ "$clean" =~ $'\033'\[[0-9\;]*m ]]; do
-        clean="${clean//${BASH_REMATCH[0]}/}"
-    done
+    # Remove códigos ANSI usando sed (mais robusto que regex)
+    local clean=$(echo -e "$text" | sed 's/\x1b\[[0-9;]*m//g')
 
-    # Usar printf para obter largura visual real
-    local visual_width=$(printf "%s" "$clean" | wc -m | tr -d ' ')
+    # Calcular espaços necessários (78 total entre bordas)
+    local text_len=${#clean}
+    local total_space=$((width - 2))  # 78 para largura 80
 
-    local padding=$(( (width - visual_width - 2) / 2 ))
-    local right_padding=$(( width - visual_width - padding - 2 ))
+    # Alinhamento à esquerda: 2 espaços de margem + texto + resto
+    local left_pad=2
+    local right_pad=$((total_space - text_len - left_pad))
 
-    # Garantir que padding não seja negativo
-    if [ $padding -lt 0 ]; then padding=0; fi
-    if [ $right_padding -lt 0 ]; then right_padding=0; fi
+    # Garantir que não seja negativo
+    if [ $right_pad -lt 0 ]; then right_pad=0; fi
 
+    # Imprimir com printf para garantir largura exata
     echo -ne "${CYAN}║${RESET}"
-    printf '%*s' "$padding" ""
+    printf '%*s' "$left_pad" ""
     echo -ne "$text"
-    printf '%*s' "$right_padding" ""
+    printf '%*s' "$right_pad" ""
     echo -e "${CYAN}║${RESET}"
 }
 
@@ -89,7 +92,7 @@ draw_header() {
     clear_screen
     draw_top_border 80
     draw_empty_line 80
-    draw_line "${BOLD}${YELLOW}💰  TIO CÂMBIO - CONVERSOR DE MOEDAS  💰${RESET}" 80
+    draw_line "${BOLD}${YELLOW}TIO CÂMBIO - CONVERSOR DE MOEDAS${RESET}" 80
     draw_empty_line 80
     draw_divider 80
 }
@@ -103,16 +106,63 @@ draw_footer() {
     draw_bottom_border 80
 }
 
+# Função para limpar buffer de entrada
+flush_input() {
+    # Drenar completamente o buffer várias vezes
+    for i in {1..5}; do
+        while read -rsn1 -t 0.01 2>/dev/null; do :; done
+    done
+}
+
+# Função para ler tecla (usa variável global KEY_PRESSED)
+read_key() {
+    local key=""
+    local seq=""
+    KEY_PRESSED=""
+
+    # Ler até 3 caracteres (ESC + sequência)
+    IFS= read -rsn1 key
+
+    # Se for ESC, ler os próximos 2 caracteres juntos
+    if [[ "$key" == $'\x1b' ]]; then
+        # Ler 2 caracteres de uma vez com timeout maior
+        IFS= read -rsn2 -t 1 seq 2>/dev/null
+
+        # Processar sequência completa
+        case "$seq" in
+            '[A'|'OA') KEY_PRESSED="up" ;;
+            '[B'|'OB') KEY_PRESSED="down" ;;
+            '[C'|'OC') KEY_PRESSED="right" ;;
+            '[D'|'OD') KEY_PRESSED="left" ;;
+            '[3~') KEY_PRESSED="delete" ;;
+            '[H') KEY_PRESSED="home" ;;
+            '[F') KEY_PRESSED="end" ;;
+            *)
+                # Se não conseguiu ler 2 chars, é ESC puro
+                KEY_PRESSED="esc"
+                ;;
+        esac
+    elif [[ "$key" == "" ]]; then
+        KEY_PRESSED="enter"
+    elif [[ "$key" == " " ]]; then
+        KEY_PRESSED="space"
+    elif [[ "$key" == "q" || "$key" == "Q" ]]; then
+        KEY_PRESSED="quit"
+    else
+        KEY_PRESSED="$key"
+    fi
+}
+
 # Função para desenhar menu
 draw_menu() {
     local selected=$1
     local -a options=(
-        "📊 Ver Cotações"
-        "💱 Converter Moedas"
-        "🔔 Configurar Alertas"
-        "📈 Ver Alertas Ativos"
-        "❓ Ajuda"
-        "❌ Sair"
+        "Ver Cotações"
+        "Converter Moedas"
+        "Configurar Alertas"
+        "Ver Alertas Ativos"
+        "Ajuda"
+        "Sair"
     )
 
     draw_empty_line 80
@@ -121,9 +171,9 @@ draw_menu() {
 
     for i in "${!options[@]}"; do
         if [ $i -eq $selected ]; then
-            draw_line "    ${GREEN}▶ ${WHITE}${BOLD}$((i+1)). ${options[$i]}${RESET}" 80
+            draw_line "${GREEN}> ${WHITE}${BOLD}$((i+1)). ${options[$i]}${RESET}" 80
         else
-            draw_line "      ${CYAN}$((i+1)). ${options[$i]}${RESET}" 80
+            draw_line "  ${CYAN}$((i+1)). ${options[$i]}${RESET}" 80
         fi
     done
 
@@ -153,21 +203,24 @@ select_currency() {
     local prompt="$1"
     local selected=0
     local -a currencies=(
-        "🇧🇷 BRL - Real Brasileiro"
-        "💵 USD - Dólar Americano"
-        "💶 EUR - Euro"
-        "💷 GBP - Libra Esterlina"
-        "💴 JPY - Iene Japonês"
-        "🇨🇳 CNY - Yuan Chinês"
-        "🇨🇭 CHF - Franco Suíço"
-        "🇨🇦 CAD - Dólar Canadense"
-        "🇦🇺 AUD - Dólar Australiano"
-        "🇦🇷 ARS - Peso Argentino"
-        "🇵🇾 PYG - Guarani Paraguaio"
-        "₿  BTC - Bitcoin"
+        "BRL - Real Brasileiro"
+        "USD - Dólar Americano"
+        "EUR - Euro"
+        "GBP - Libra Esterlina"
+        "JPY - Iene Japonês"
+        "CNY - Yuan Chinês"
+        "CHF - Franco Suíço"
+        "CAD - Dólar Canadense"
+        "AUD - Dólar Australiano"
+        "ARS - Peso Argentino"
+        "PYG - Guarani Paraguaio"
+        "BTC - Bitcoin"
     )
 
     local -a codes=("BRL" "USD" "EUR" "GBP" "JPY" "CNY" "CHF" "CAD" "AUD" "ARS" "PYG" "BTC")
+
+    SELECTED_CURRENCY=""
+    flush_input
 
     while true; do
         draw_header
@@ -177,18 +230,18 @@ select_currency() {
 
         for i in "${!currencies[@]}"; do
             if [ $i -eq $selected ]; then
-                draw_line "    ${GREEN}▶ ${WHITE}${BOLD}${currencies[$i]}${RESET}" 80
+                draw_line "${GREEN}> ${WHITE}${BOLD}${currencies[$i]}${RESET}" 80
             else
-                draw_line "      ${CYAN}${currencies[$i]}${RESET}" 80
+                draw_line "  ${CYAN}${currencies[$i]}${RESET}" 80
             fi
         done
 
         draw_empty_line 80
         draw_footer
 
-        key=$(wait_key)
+        read_key
 
-        case $key in
+        case "$KEY_PRESSED" in
             up)
                 ((selected--))
                 [ $selected -lt 0 ] && selected=$((${#currencies[@]}-1))
@@ -197,17 +250,21 @@ select_currency() {
                 ((selected++))
                 [ $selected -ge ${#currencies[@]} ] && selected=0
                 ;;
-            ""|" ")
-                echo "${codes[$selected]}"
+            enter|space)
+                SELECTED_CURRENCY="${codes[$selected]}"
+                flush_input
                 return 0
                 ;;
-            [0-9])
-                if [ "$key" -ge 1 ] && [ "$key" -le ${#currencies[@]} ]; then
-                    echo "${codes[$((key-1))]}"
+            [1-9])
+                if [ "$KEY_PRESSED" -le ${#currencies[@]} ]; then
+                    SELECTED_CURRENCY="${codes[$((KEY_PRESSED-1))]}"
+                    flush_input
                     return 0
                 fi
                 ;;
-            q|esc)
+            quit|esc)
+                SELECTED_CURRENCY=""
+                flush_input
                 return 1
                 ;;
         esac
@@ -216,36 +273,71 @@ select_currency() {
 
 # Função para mostrar cotações
 show_quotes() {
-    local base_currency=$(select_currency "Selecione a moeda base:")
-
-    if [ $? -ne 0 ]; then
+    select_currency "Selecione a moeda base:"
+    if [ $? -ne 0 ] || [ -z "$SELECTED_CURRENCY" ]; then
         return
     fi
 
+    local base_currency="$SELECTED_CURRENCY"
+
+    # Mostrar mensagem de aguarde
     draw_header
     draw_empty_line 80
     draw_line "${BOLD}${YELLOW}Buscando cotações...${RESET}" 80
     draw_empty_line 80
+    draw_line "${CYAN}Aguarde... (somente Ctrl+C para cancelar)${RESET}" 80
+    draw_empty_line 80
     draw_footer
 
-    # Executar script e capturar saída
-    $SCRIPT_PATH -${base_currency,,} > $TEMP_FILE 2>&1
+    # Executar API em background
+    local currency_lower=$(echo "$base_currency" | tr '[:upper:]' '[:lower:]')
+    $SCRIPT_PATH -${currency_lower} > $TEMP_FILE 2>&1 &
+    local api_pid=$!
+
+    # Bloquear teclado com Python (descarta TODAS as teclas exceto Ctrl+C)
+    python3 ./lock_keyboard.py $api_pid 2>/dev/null
+    local lock_exit=$?
+
+    # Se Python retornou 130, significa que Ctrl+C foi pressionado
+    if [ $lock_exit -eq 130 ]; then
+        clear_screen
+        echo -e "${YELLOW}Operação cancelada pelo usuário.${RESET}"
+        exit 130
+    fi
+
+    # Aguardar API terminar e capturar exit code
+    wait $api_pid 2>/dev/null
+    local exit_code=$?
+
+    # Limpar buffer final
+    flush_input
+
+    # Verificar se houve erro
+    if [ $exit_code -ne 0 ] || [ ! -s $TEMP_FILE ]; then
+        draw_header
+        draw_empty_line 80
+        draw_line "${RED}Erro ao buscar cotações!${RESET}" 80
+        draw_empty_line 80
+        draw_line "Exit code: $exit_code" 80
+        draw_line "Arquivo temp: $TEMP_FILE" 80
+        draw_empty_line 80
+        draw_line "${WHITE}Pressione qualquer tecla para continuar...${RESET}" 80
+        draw_empty_line 80
+        draw_bottom_border 80
+        read -rsn1
+        return
+    fi
 
     # Mostrar resultado
     draw_header
     draw_empty_line 80
 
-    # Ler e exibir linha por linha
-    local line_count=0
+    # Ler e exibir linha por linha (todas as linhas)
     while IFS= read -r line; do
         if [ ${#line} -gt 76 ]; then
             line="${line:0:76}"
         fi
         draw_line "$line" 80
-        ((line_count++))
-        if [ $line_count -ge 20 ]; then
-            break
-        fi
     done < $TEMP_FILE
 
     draw_empty_line 80
@@ -261,12 +353,14 @@ show_quotes() {
 # Função para converter moedas
 convert_currency() {
     # Selecionar moeda de origem
-    local from_currency=$(select_currency "Selecione a moeda DE (origem):")
-    if [ $? -ne 0 ]; then return; fi
+    select_currency "Selecione a moeda DE (origem):"
+    if [ $? -ne 0 ] || [ -z "$SELECTED_CURRENCY" ]; then return; fi
+    local from_currency="$SELECTED_CURRENCY"
 
     # Selecionar moeda de destino
-    local to_currency=$(select_currency "Selecione a moeda PARA (destino):")
-    if [ $? -ne 0 ]; then return; fi
+    select_currency "Selecione a moeda PARA (destino):"
+    if [ $? -ne 0 ] || [ -z "$SELECTED_CURRENCY" ]; then return; fi
+    local to_currency="$SELECTED_CURRENCY"
 
     # Pedir valor
     draw_header
@@ -274,6 +368,7 @@ convert_currency() {
     draw_line "${BOLD}${WHITE}CONVERSÃO: ${from_currency} → ${to_currency}${RESET}" 80
     draw_empty_line 80
     draw_line "${CYAN}Digite o valor a converter:${RESET}" 80
+    draw_line "${CYAN}(Aceita: 1000 ou 1000.50 ou 1.000,50 ou 1,000.50)${RESET}" 80
     draw_empty_line 80
     draw_bottom_border 80
 
@@ -281,11 +376,67 @@ convert_currency() {
     read amount
     echo -ne "${RESET}"
 
-    # Validar valor
+    # Normalizar valor: detectar formato e converter para padrão interno (ponto decimal)
+    # Estratégia: o ÚLTIMO separador (ponto ou vírgula) é sempre o decimal
+
+    # Remove espaços
+    amount=$(echo "$amount" | tr -d ' ')
+
+    # Encontra a última ocorrência de ponto ou vírgula
+    local last_dot_pos=$(echo "$amount" | awk '{print index($0,".")}' | tail -1)
+    local last_comma_pos=$(echo "$amount" | awk '{print index($0,",")}' | tail -1)
+
+    # Conta total de cada separador
+    local dot_count=$(echo "$amount" | tr -cd '.' | wc -c | tr -d ' ')
+    local comma_count=$(echo "$amount" | tr -cd ',' | wc -c | tr -d ' ')
+
+    if [ $dot_count -eq 0 ] && [ $comma_count -eq 0 ]; then
+        # Sem separadores - número inteiro
+        :
+    elif [ $dot_count -gt 0 ] && [ $comma_count -eq 0 ]; then
+        # Só tem pontos
+        if [ $dot_count -eq 1 ]; then
+            # Um ponto apenas - é decimal (1000.50)
+            :
+        else
+            # Múltiplos pontos - são milhares (1.000.000), remove todos
+            amount=$(echo "$amount" | tr -d '.')
+        fi
+    elif [ $comma_count -gt 0 ] && [ $dot_count -eq 0 ]; then
+        # Só tem vírgulas
+        if [ $comma_count -eq 1 ]; then
+            # Uma vírgula apenas - é decimal (1000,50)
+            amount=$(echo "$amount" | tr ',' '.')
+        else
+            # Múltiplas vírgulas - são milhares (1,000,000), remove todas
+            amount=$(echo "$amount" | tr -d ',')
+        fi
+    else
+        # Tem ambos: último é decimal, outros são milhares
+        # Verifica qual vem por último usando grep e contando posição
+        local last_comma=$(echo "$amount" | grep -o ',' | tail -1)
+        local last_dot=$(echo "$amount" | grep -o '\.' | tail -1)
+
+        # Pega posição do último caractere de cada tipo
+        local comma_lastpos=$(echo "$amount" | awk -F',' '{print NF-1}')
+        local dot_lastpos=$(echo "$amount" | awk -F'.' '{print NF-1}')
+
+        # Verifica qual separador aparece depois na string
+        if [[ "$amount" =~ .*,.*\. ]]; then
+            # Ponto vem depois da vírgula: 1,000.50 (ponto é decimal)
+            amount=$(echo "$amount" | tr -d ',')
+        else
+            # Vírgula vem depois do ponto: 1.000,50 (vírgula é decimal)
+            amount=$(echo "$amount" | tr -d '.')
+            amount=$(echo "$amount" | tr ',' '.')
+        fi
+    fi
+
+    # Validar valor normalizado
     if ! [[ "$amount" =~ ^[0-9]+\.?[0-9]*$ ]]; then
         draw_header
         draw_empty_line 80
-        draw_line "${RED}❌ Valor inválido!${RESET}" 80
+        draw_line "${RED}Valor inválido!${RESET}" 80
         draw_empty_line 80
         draw_line "${WHITE}Pressione qualquer tecla para continuar...${RESET}" 80
         draw_empty_line 80
@@ -299,9 +450,36 @@ convert_currency() {
     draw_empty_line 80
     draw_line "${BOLD}${YELLOW}Convertendo...${RESET}" 80
     draw_empty_line 80
+    draw_line "${CYAN}Aguarde... (somente Ctrl+C para cancelar)${RESET}" 80
+    draw_empty_line 80
     draw_footer
 
-    result=$($SCRIPT_PATH -${from_currency,,} ${to_currency,,} $amount 2>&1)
+    # Executar API em background
+    local temp_result="/tmp/tiocambio_convert_$$"
+    $SCRIPT_PATH -$(echo "$from_currency" | tr "[:upper:]" "[:lower:]") $(echo "$to_currency" | tr "[:upper:]" "[:lower:]") $amount > $temp_result 2>&1 &
+    local api_pid=$!
+
+    # Bloquear teclado com Python (descarta TODAS as teclas exceto Ctrl+C)
+    python3 ./lock_keyboard.py $api_pid 2>/dev/null
+    local lock_exit=$?
+
+    # Se Python retornou 130, significa que Ctrl+C foi pressionado
+    if [ $lock_exit -eq 130 ]; then
+        rm -f $temp_result
+        clear_screen
+        echo -e "${YELLOW}Operação cancelada pelo usuário.${RESET}"
+        exit 130
+    fi
+
+    # Aguardar API terminar
+    wait $api_pid 2>/dev/null
+
+    # Ler resultado
+    result=$(cat $temp_result 2>/dev/null)
+    rm -f $temp_result
+
+    # Limpar buffer final
+    flush_input
 
     # Mostrar resultado
     draw_header
@@ -408,7 +586,7 @@ configure_pair_alert() {
     key=$(wait_key)
     if [[ "$key" == "" ]]; then
         # Iniciar alerta em background
-        nohup $SCRIPT_PATH --alert ${from_currency,,} ${to_currency,,} $min_val $max_val > "/tmp/alert_${from_currency}_${to_currency}_$$.log" 2>&1 &
+        nohup $SCRIPT_PATH --alert $(echo "$from_currency" | tr "[:upper:]" "[:lower:]") $(echo "$to_currency" | tr "[:upper:]" "[:lower:]") $min_val $max_val > "/tmp/alert_${from_currency}_${to_currency}_$$.log" 2>&1 &
         local pid=$!
         echo "$pid|$from_currency|$to_currency|$min_val|$max_val" >> /tmp/tiocambio_alerts.txt
 
@@ -459,7 +637,7 @@ configure_btc_alert() {
 
     key=$(wait_key)
     if [[ "$key" == "" ]]; then
-        nohup $SCRIPT_PATH --btc-alert ${currency,,} $min_val $max_val > "/tmp/alert_btc_${currency}_$$.log" 2>&1 &
+        nohup $SCRIPT_PATH --btc-alert $(echo "$currency" | tr "[:upper:]" "[:lower:]") $min_val $max_val > "/tmp/alert_btc_${currency}_$$.log" 2>&1 &
         local pid=$!
         echo "$pid|BTC|$currency|$min_val|$max_val" >> /tmp/tiocambio_alerts.txt
 

@@ -1,88 +1,125 @@
-# 💰 Conversor de Moedas + Bitcoin
+# 💰 Currency + Bitcoin Converter
 
-Script multiplataforma para consultar cotações de moedas e Bitcoin em tempo real. Realize conversões entre 11 moedas tradicionais e Bitcoin (BTC).
+**English** | **[Português](README-ptbr.md)**
 
-**Disponível para:**
+---
+
+Multi-platform script for real-time currency and Bitcoin exchange rate queries. Convert between 11 traditional currencies and Bitcoin (BTC).
+
+**Available for:**
 - 🐧 Linux/macOS (Bash)
-- 🪟 Windows (PowerShell e Batch)
-- 🖥️ Interface Gráfica (GUI com Python/Tkinter)
-- 🖼️ Interface de Terminal (TUI - Text User Interface)
+- 🪟 Windows (PowerShell and Batch)
+- 🖥️ Graphical Interface (GUI with Python/Tkinter)
+- 🖼️ Terminal Interface (TUI - Text User Interface)
 
-## 📋 Características
+## 📋 Features
 
-- ✅ Consulta cotações em tempo real via API
-- ✅ Suporte para 12 moedas (11 tradicionais + Bitcoin)
-- ✅ Conversão bidirecional entre moedas
-- ✅ Interface visual com emojis
-- ✅ **Interface Gráfica (GUI) moderna e intuitiva** 🖥️
-- ✅ **Interface de Terminal (TUI) interativa com navegação** 🖼️
-- ✅ Organização por regiões geográficas
-- ✅ Cotação do dólar comercial e paralelo (turismo)
-- ✅ Cotação de Bitcoin (BTC) em tempo real
-- ✅ **Sistema de alertas de preço para Bitcoin** 🔔
-- ✅ **Sistema de alertas para qualquer par de moedas** 💱
-- ✅ Monitoramento contínuo com notificações
-- ✅ Sem necessidade de API key
+- ✅ Real-time exchange rate queries via API
+- ✅ Support for 12 currencies (11 traditional + Bitcoin)
+- ✅ Bidirectional currency conversion
+- ✅ **Monetary formatting respecting each country's standard** 🌍
+- ✅ Visual interface with emojis
+- ✅ **Modern and intuitive Graphical Interface (GUI)** 🖥️
+- ✅ **Interactive Terminal Interface (TUI) with navigation** 🖼️
+- ✅ Organization by geographic regions
+- ✅ Commercial and parallel (tourism) dollar quotation
+- ✅ Real-time Bitcoin (BTC) quotation
+- ✅ **Bitcoin price alert system** 🔔
+- ✅ **Alert system for any currency pair** 💱
+- ✅ Continuous monitoring with notifications
+- ✅ No API key required
 
-## 📁 Estrutura do Projeto
+## 📁 Project Structure
 
 ```
 tiocambio/
-├── tiocambio.sh          # Script principal (Bash) - 22KB
-├── tiocambio_tui.sh      # Interface de Terminal (TUI) - 20KB
-├── tiocambio.ps1         # Versão PowerShell (Windows) - 7.7KB
-├── tiocambio.bat         # Versão Batch (Windows) - 4KB
-├── tiocambio_gui.py      # Interface Gráfica (Python/Tkinter) - 15KB
-├── run_gui.sh            # Script de lançamento da GUI - 1.2KB
-├── requirements.txt      # Dependências Python - 376B
-├── README.md             # Documentação principal - 18KB
-├── GUI_GUIDE.md          # Guia da Interface Gráfica - 5.5KB
-└── CHECKLIST.md          # Checklist do projeto - 5KB
+├── tiocambio.sh          # Main script (Bash) - 22KB
+├── tiocambio_tui.sh      # Terminal Interface (TUI) - 20KB
+├── tiocambio.ps1         # PowerShell version (Windows) - 7.7KB
+├── tiocambio.bat         # Batch version (Windows) - 4KB
+├── tiocambio_gui.py      # Graphical Interface (Python/Tkinter) - 15KB
+├── run_gui.sh            # GUI launcher script - 1.2KB
+├── requirements.txt      # Python dependencies - 376B
+├── README.md             # Main documentation - 18KB
+├── GUI_GUIDE.md          # Graphical Interface Guide - 5.5KB
+└── CHECKLIST.md          # Project checklist - 5KB
 ```
 
-## 🌍 Moedas Suportadas
+## 💱 International Monetary Formatting
 
-### 💵 Américas
-- **USD** - Dólar Americano (EUA)
-- **USD Paralelo** - Dólar Turismo/Paralelo
-- **CAD** - Dólar Canadense
-- **ARS** - Peso Argentino
-- **PYG** - Guarani Paraguaio
+TioCâmbio automatically respects each country's formatting standard:
 
-### 💶 Europa
+### 🇧🇷 Brazil, Argentina, Paraguay (BRL, ARS, PYG)
+- **Thousands separator:** period (.)
+- **Decimal separator:** comma (,)
+- **Example:** `1.000,00` (one thousand reais)
+
+### 🇺🇸 United States, Canada, United Kingdom (USD, CAD, GBP, JPY, CNY, CHF, AUD)
+- **Thousands separator:** comma (,)
+- **Decimal separator:** period (.)
+- **Example:** `1,000.00` (one thousand dollars)
+
+### 🇪🇺 Europe (EUR)
+- **Thousands separator:** space ( )
+- **Decimal separator:** comma (,)
+- **Example:** `1 000,00` (one thousand euros)
+
+### ₿ Bitcoin (BTC)
+- **No separators**
+- **8 decimal places** (maximum precision)
+- **Example:** `0.00012345`
+
+**Value input (TUI):**
+The system accepts ANY format as input and automatically normalizes it:
+- `1000` → `1.000,00` (BRL) or `1,000.00` (USD)
+- `1000.50` → `1.000,50` (BRL) or `1,000.50` (USD)
+- `1.000,50` → `1.000,50` (BRL)
+- `1,000.50` → `1,000.50` (USD)
+
+## 🌍 Supported Currencies
+
+### 💵 Americas
+- **USD** - US Dollar
+- **USD Parallel** - Tourism/Parallel Dollar
+- **CAD** - Canadian Dollar
+- **BRL** - Brazilian Real
+- **ARS** - Argentine Peso
+- **PYG** - Paraguayan Guarani
+
+### 💶 Europe
 - **EUR** - Euro
-- **GBP** - Libra Esterlina (Reino Unido)
-- **CHF** - Franco Suíço
+- **GBP** - British Pound Sterling
+- **CHF** - Swiss Franc
 
-### 🌏 Ásia e Oceania
-- **JPY** - Iene Japonês
-- **CNY** - Yuan Chinês
-- **AUD** - Dólar Australiano
+### 🌏 Asia and Oceania
+- **JPY** - Japanese Yen
+- **CNY** - Chinese Yuan
+- **AUD** - Australian Dollar
 
-### ₿ Criptomoedas
+### ₿ Cryptocurrencies
 - **BTC** - Bitcoin
 
-## 🚀 Instalação
+## 🚀 Installation
 
-### 🖥️ Interface Gráfica (GUI)
+### 🖥️ Graphical Interface (GUI)
 
-A GUI oferece uma experiência visual moderna e intuitiva com todas as funcionalidades do script em uma interface amigável.
+The GUI offers a modern and intuitive visual experience with all script functionalities in a user-friendly interface.
 
-#### Pré-requisitos
-- Python 3.6 ou superior
-- Tkinter (geralmente já vem com Python)
+#### Prerequisites
+- Python 3.6 or higher
+- Tkinter (usually comes with Python)
 
-**Verificar se o Python está instalado:**
+**Check if Python is installed:**
 ```bash
 python3 --version
 ```
 
-**Verificar se o Tkinter está disponível:**
+**Check if Tkinter is available:**
 ```bash
 python3 -c "import tkinter; print('Tkinter OK')"
 ```
 
-**Se o Tkinter não estiver instalado:**
+**If Tkinter is not installed:**
 
 macOS:
 ```bash
@@ -99,99 +136,99 @@ Linux (Fedora/Red Hat):
 sudo dnf install python3-tkinter
 ```
 
-#### Como usar a GUI
+#### How to use the GUI
 
-**Opção 1: Script de lançamento (recomendado)**
+**Option 1: Launch script (recommended)**
 ```bash
 ./run_gui.sh
 ```
 
-**Opção 2: Executar diretamente**
+**Option 2: Run directly**
 ```bash
 python3 tiocambio_gui.py
 ```
 
-#### Funcionalidades da GUI
+#### GUI Features
 
-📊 **Aba Cotações:**
-- Selecione a moeda base
-- Visualize todas as cotações em tempo real
-- Interface organizada e fácil de ler
+📊 **Quotes Tab:**
+- Select base currency
+- View all quotes in real time
+- Organized and easy-to-read interface
 
-💱 **Aba Conversão:**
-- Selecione moeda de origem
-- Digite o valor a converter
-- Selecione moeda de destino
-- Resultado instantâneo
+💱 **Conversion Tab:**
+- Select source currency
+- Enter amount to convert
+- Select destination currency
+- Instant result
 
-🔔 **Aba Alertas:**
-- Configure alertas para qualquer par de moedas
-- Alertas específicos para Bitcoin
-- Visualize alertas ativos em tempo real
-- Gerencie múltiplos alertas simultâneos
-- Logs detalhados de cada verificação
+🔔 **Alerts Tab:**
+- Configure alerts for any currency pair
+- Specific Bitcoin alerts
+- View active alerts in real time
+- Manage multiple simultaneous alerts
+- Detailed logs of each check
 
-### 🖼️ Interface de Terminal (TUI)
+### 🖼️ Terminal Interface (TUI)
 
-A TUI oferece uma interface gráfica linda diretamente no terminal, sem precisar de Python ou bibliotecas externas!
+The TUI offers a beautiful graphical interface directly in the terminal, without needing Python or external libraries!
 
-#### Como usar a TUI
+#### How to use the TUI
 
 ```bash
 ./tiocambio_tui.sh
 ```
 
-#### Funcionalidades da TUI
+#### TUI Features
 
-**Interface bonita com caracteres ASCII:**
-- Bordas duplas desenhadas com caracteres Unicode
-- Cores vibrantes e emojis
-- Navegação por setas ou números
-- Menus interativos
+**Beautiful interface with ASCII characters:**
+- Double borders drawn with Unicode characters
+- Vibrant colors and emojis
+- Navigation with arrows or numbers
+- Interactive menus
 
-**📊 Ver Cotações:**
-- Seleção visual de moeda base
-- Exibição formatada de todas as cotações
-- Navegação por setas ↑↓
+**📊 View Quotes:**
+- Visual base currency selection
+- Formatted display of all quotes
+- Navigate with arrow keys ↑↓
 
-**💱 Conversão:**
-- Seleção visual de moedas origem/destino
-- Input de valor com validação
-- Resultado instantâneo formatado
+**💱 Conversion:**
+- Visual selection of source/destination currencies
+- Value input with validation
+- Formatted instant result
 
-**🔔 Configurar Alertas:**
-- Menu para escolher tipo (Par de Moedas ou Bitcoin)
-- Seleção visual de moedas
-- Configuração de valores mín/máx
-- Alertas executados em background
+**🔔 Configure Alerts:**
+- Menu to choose type (Currency Pair or Bitcoin)
+- Visual currency selection
+- Configuration of min/max values
+- Alerts run in background
 
-**📈 Ver Alertas Ativos:**
-- Lista de todos os alertas rodando
-- Mostrar PID e detalhes de cada alerta
-- Opção para matar todos os alertas (tecla 'k')
+**📈 View Active Alerts:**
+- List of all running alerts
+- Show PID and details of each alert
+- Option to kill all alerts (key 'k')
 
-**Navegação:**
-- `↑↓` - Navegar pelo menu
-- `ENTER` ou `ESPAÇO` - Confirmar seleção
-- `1-6` - Atalho numérico
-- `ESC` ou `q` - Voltar/Sair
+**Navigation:**
+- `↑↓` - Navigate menu
+- `ENTER` or `SPACE` - Confirm selection
+- `1-6` - Numeric shortcut
+- `ESC` or `q` - Back/Exit
 
-**Vantagens da TUI:**
-- Nenhuma dependência externa (só Bash!)
-- Funciona em qualquer terminal
-- Interface visual linda e moderna
-- Navegação intuitiva
-- Perfeita para servidores SSH
+**TUI Advantages:**
+- No external dependencies (Bash only!)
+- Works in any terminal
+- Beautiful and modern visual interface
+- Intuitive navigation
+- Perfect for SSH servers
 
 ### 🐧 Linux / macOS
 
-#### Pré-requisitos
-O script requer os seguintes programas instalados:
-- `curl` - para fazer requisições HTTP
-- `bc` - para cálculos matemáticos
-- `bash` - shell (geralmente já instalado)
+#### Prerequisites
+The script requires the following programs installed:
+- `curl` - for HTTP requests
+- `bc` - for mathematical calculations
+- `bash` - shell (usually already installed)
 
-No macOS, estes programas geralmente já vêm instalados. No Linux:
+On macOS, these programs usually come pre-installed. On Linux:
 
 ```bash
 # Debian/Ubuntu
@@ -201,554 +238,454 @@ sudo apt-get install curl bc
 sudo yum install curl bc
 ```
 
-#### Download e Configuração
+#### Download and Setup
 
-1. Clone o repositório ou baixe o arquivo:
+1. Clone the repository or download the file:
 ```bash
-git clone https://github.com/seu-usuario/tiocambio.git
+git clone https://github.com/your-user/tiocambio.git
 cd tiocambio
 ```
 
-2. Dê permissão de execução ao script:
+2. Give execution permission to the script:
 ```bash
 chmod +x tiocambio.sh
 ```
 
 ### 🪟 Windows
 
-Você tem **3 opções** para executar no Windows:
+You have **3 options** to run on Windows:
 
-#### Opção 1: PowerShell (Recomendado)
+#### Option 1: PowerShell (Recommended)
 
-**Pré-requisitos:** PowerShell 5.1+ (já incluído no Windows 10/11)
+**Prerequisites:** PowerShell 5.1+ (already included in Windows 10/11)
 
 ```powershell
-# 1. Baixe o arquivo tiocambio.ps1
-# 2. Abra o PowerShell
-# 3. Navegue até o diretório do arquivo
-cd C:\caminho\para\o\arquivo
+# 1. Download the tiocambio.ps1 file
+# 2. Open PowerShell
+# 3. Navigate to the file directory
+cd C:\path\to\file
 
-# 4. Se necessário, habilite a execução de scripts (uma vez apenas):
+# 4. If necessary, enable script execution (only once):
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
-# 5. Execute o script
+# 5. Run the script
 .\tiocambio.ps1
 ```
 
-#### Opção 2: Batch (.bat)
+#### Option 2: Batch (.bat)
 
-**Pré-requisitos:** Windows 10/11 com curl instalado (já incluído por padrão)
+**Prerequisites:** Windows 10/11 with curl installed (included by default)
 
 ```cmd
-# 1. Baixe o arquivo tiocambio.bat
-# 2. Abra o Prompt de Comando (CMD)
-# 3. Navegue até o diretório do arquivo
-cd C:\caminho\para\o\arquivo
+# 1. Download the tiocambio.bat file
+# 2. Open Command Prompt (CMD)
+# 3. Navigate to the file directory
+cd C:\path\to\file
 
-# 4. Execute o script
+# 4. Run the script
 tiocambio.bat
 ```
 
-#### Opção 3: WSL (Windows Subsystem for Linux)
+#### Option 3: WSL (Windows Subsystem for Linux)
 
-Se você tem WSL instalado, pode usar o script Bash normalmente:
+If you have WSL installed, you can use the Bash script normally:
 
 ```bash
-# 1. Abra o WSL (Ubuntu, Debian, etc)
-# 2. Instale os pré-requisitos
+# 1. Open WSL (Ubuntu, Debian, etc)
+# 2. Install prerequisites
 sudo apt-get install curl bc
 
-# 3. Execute o script bash
+# 3. Run the bash script
 chmod +x tiocambio.sh
 ./tiocambio.sh
 ```
 
-## 💻 Uso
+## 💻 Usage
 
-⚠️ **IMPORTANTE:** O script agora requer que você especifique uma **moeda base** obrigatória!
+⚠️ **IMPORTANT:** The script now requires you to specify a **base currency**!
 
-### Modo 1: Executar sem argumentos (Menu Interativo)
+### Mode 1: Run without arguments (Interactive Menu)
 
-Se você executar o script sem argumentos, um menu interativo será exibido para você escolher a moeda base:
+If you run the script without arguments, an interactive menu will be displayed for you to choose the base currency:
 
 **Linux/macOS:**
 ```bash
 ./tiocambio.sh
 ```
 
-**Exemplo de saída:**
+**Example output:**
 ```
 ==========================================
-💰  TIO CÂMBIO - SELECIONE A MOEDA BASE
+💰  TIO CÂMBIO - SELECT BASE CURRENCY
 ==========================================
 
-Escolha a moeda base para ver as cotações:
+Choose the base currency to view quotes:
 
-  1) 🇧🇷 BRL - Real Brasileiro
-  2) 💵 USD - Dólar Americano
+  1) 🇧🇷 BRL - Brazilian Real
+  2) 💵 USD - US Dollar
   3) 💶 EUR - Euro
-  4) 💷 GBP - Libra Esterlina
-  5) 💴 JPY - Iene Japonês
-  6) 🇨🇳 CNY - Yuan Chinês
-  7) 🇨🇭 CHF - Franco Suíço
-  8) 🇨🇦 CAD - Dólar Canadense
-  9) 🇦🇺 AUD - Dólar Australiano
- 10) 🇦🇷 ARS - Peso Argentino
- 11) 🇵🇾 PYG - Guarani Paraguaio
+  4) 💷 GBP - British Pound
+  5) 💴 JPY - Japanese Yen
+  6) 🇨🇳 CNY - Chinese Yuan
+  7) 🇨🇭 CHF - Swiss Franc
+  8) 🇨🇦 CAD - Canadian Dollar
+  9) 🇦🇺 AUD - Australian Dollar
+ 10) 🇦🇷 ARS - Argentine Peso
+ 11) 🇵🇾 PYG - Paraguayan Guarani
  12) ₿  BTC - Bitcoin
-  0) ❌ Sair
+  0) ❌ Exit
 
-Digite o número da moeda:
+Enter currency number:
 ```
 
-### Modo 2: Ver cotações em relação a uma moeda específica
+### Mode 2: View quotes relative to a specific currency
 
-Use a flag da moeda base para ver todas as cotações em relação a ela:
+Use the base currency flag to view all quotes relative to it:
 
 **Linux/macOS:**
 ```bash
-# Ver cotações em relação ao Real Brasileiro
+# View quotes relative to Brazilian Real
 ./tiocambio.sh -brl
 
-# Ver cotações em relação ao Dólar Americano
+# View quotes relative to US Dollar
 ./tiocambio.sh -usd
 
-# Ver cotações em relação ao Euro
+# View quotes relative to Euro
 ./tiocambio.sh -eur
 
-# Ver cotações em relação à Libra Esterlina
+# View quotes relative to British Pound
 ./tiocambio.sh -gbp
 ```
 
-**Exemplo com `-brl` (quanto custam as moedas em Real):**
-```
-==========================================
-🇧🇷  QUANTO CUSTAM AS MOEDAS EM Real Brasileiro
-==========================================
+### Mode 3: Convert specific amounts
 
-💵 AMÉRICAS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-💵 1 Dólar Americano (EUA) = 5.32 Real Brasileiro
-💸 1 Dólar Paralelo (Turismo) = 5.32 Real Brasileiro
-🇨🇦 1 Dólar Canadense = 3.81 Real Brasileiro
-🇦🇷 1 Peso Argentino = 0.0037 Real Brasileiro
-🇵🇾 1 Guarani Paraguaio = 0.00076 Real Brasileiro
-
-💶 EUROPA
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-💶 1 Euro = 6.20 Real Brasileiro
-💷 1 Libra Esterlina (Reino Unido) = 7.08 Real Brasileiro
-🇨🇭 1 Franco Suíço = 6.64 Real Brasileiro
-
-🌏 ÁSIA E OCEANIA
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-💴 1 Iene Japonês = 0.034 Real Brasileiro
-🇨🇳 1 Yuan Chinês = 0.75 Real Brasileiro
-🇦🇺 1 Dólar Australiano = 3.51 Real Brasileiro
-
-₿ CRIPTOMOEDAS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-₿ 1 Bitcoin = 491532 Real Brasileiro
-```
-
-**Exemplo com `-usd` (quanto custam as moedas em Dólar):**
-```
-==========================================
-💵  QUANTO CUSTAM AS MOEDAS EM Dólar Americano
-==========================================
-
-💰 PRINCIPAIS MOEDAS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🇧🇷 1 Real Brasileiro = 0.19 Dólar Americano
-💶 1 Euro = 1.17 Dólar Americano
-💷 1 Libra Esterlina = 1.33 Dólar Americano
-💴 1 Iene Japonês = 0.0064 Dólar Americano
-🇨🇳 1 Yuan Chinês = 0.14 Dólar Americano
-...
-```
-
-### Modo 3: Converter valores específicos
-
-Agora você pode converter valores usando a sintaxe simplificada:
+Now you can convert amounts using the simplified syntax:
 
 ```bash
-# Nova sintaxe: -<moeda_base> <moeda_destino> <valor>
+# New syntax: -<base_currency> <destination_currency> <amount>
 
-# Converter 100 Reais para Dólares
+# Convert 100 Reais to Dollars
 ./tiocambio.sh -brl usd 100
-# Saída: 🇧🇷 100 Real Brasileiro = 💵 17.39 Dólar Americano
+# Output: 🇧🇷 100 Brazilian Real = 💵 17.39 US Dollar
 
-# Converter 50 Dólares para Reais
+# Convert 50 Dollars to Reais
 ./tiocambio.sh -usd brl 50
-# Saída: 💵 50 Dólar Americano = 🇧🇷 287.50 Real Brasileiro
+# Output: 💵 50 US Dollar = 🇧🇷 287.50 Brazilian Real
 
-# Converter 200 Euros para Libras
+# Convert 200 Euros to Pounds
 ./tiocambio.sh -eur gbp 200
-# Saída: 💶 200 Euro = 💷 168.50 Libra Esterlina
+# Output: 💶 200 Euro = 💷 168.50 British Pound
 
-# Converter 1000 Reais para Euros
+# Convert 1000 Reais to Euros
 ./tiocambio.sh -brl eur 1000
-# Saída: 🇧🇷 1000 Real Brasileiro = 💶 161.81 Euro
+# Output: 🇧🇷 1000 Brazilian Real = 💶 161.81 Euro
 ```
 
-### Modo 4: Alertas de preço do Bitcoin
+### Mode 4: Bitcoin price alerts
 
-Monitore o preço do Bitcoin e receba alertas quando ele entrar em uma faixa de preço específica:
+Monitor Bitcoin price and receive alerts when it enters a specific price range:
 
 ```bash
-# Sintaxe: ./tiocambio.sh --btc-alert <moeda> <valor_min> <valor_max>
+# Syntax: ./tiocambio.sh --btc-alert <currency> <min_value> <max_value>
 
-# Monitorar Bitcoin em Reais (alerta entre R$ 450k e R$ 500k)
+# Monitor Bitcoin in Reais (alert between R$ 450k and R$ 500k)
 ./tiocambio.sh --btc-alert brl 450000 500000
 
-# Monitorar Bitcoin em Dólares (alerta entre $90k e $100k)
+# Monitor Bitcoin in Dollars (alert between $90k and $100k)
 ./tiocambio.sh --btc-alert usd 90000 100000
 
-# Monitorar Bitcoin em Euros (alerta entre €85k e €95k)
+# Monitor Bitcoin in Euros (alert between €85k and €95k)
 ./tiocambio.sh --btc-alert eur 85000 95000
 ```
 
-**Como funciona:**
-- O script verifica o preço do Bitcoin a cada 60 segundos
-- Quando o preço está **DENTRO** da faixa, emite um alerta sonoro 🔔
-- Quando o preço está **FORA** da faixa, mostra apenas o status
-- Pressione `Ctrl+C` para parar o monitoramento
+**How it works:**
+- The script checks Bitcoin price every 60 seconds
+- When the price is **WITHIN** the range, it emits a sound alert 🔔
+- When the price is **OUTSIDE** the range, it only shows the status
+- Press `Ctrl+C` to stop monitoring
 
-**Exemplo de saída:**
-```
-==========================================
-₿  ALERTA DE PREÇO DO BITCOIN
-==========================================
+### Mode 5: Alerts for any currency pair
 
-Moeda: 🇧🇷 Real Brasileiro
-Faixa de alerta: 450000 - 500000
-Intervalo de verificação: 60s
-
-Pressione Ctrl+C para parar o monitoramento
-==========================================
-
-⏱️  [04/12/2025 14:30:15] Bitcoin: 🇧🇷 488357 Real Brasileiro (ABAIXO da faixa)
-⏱️  [04/12/2025 14:31:15] Bitcoin: 🇧🇷 492150 Real Brasileiro (DENTRO DA FAIXA) 🔔
-```
-
-### Modo 5: Alertas para qualquer par de moedas
-
-Agora você pode monitorar a conversão entre QUALQUER par de moedas, não apenas Bitcoin:
+Now you can monitor conversion between ANY currency pair, not just Bitcoin:
 
 ```bash
-# Sintaxe: ./tiocambio.sh --alert <moeda_origem> <moeda_destino> <valor_min> <valor_max>
+# Syntax: ./tiocambio.sh --alert <source_currency> <destination_currency> <min_value> <max_value>
 
-# Monitorar Dólar → Real (alerta entre R$ 5.00 e R$ 5.50)
+# Monitor Dollar → Real (alert between R$ 5.00 and R$ 5.50)
 ./tiocambio.sh --alert usd brl 5.0 5.5
 
-# Monitorar Euro → Dólar (alerta entre $1.10 e $1.20)
+# Monitor Euro → Dollar (alert between $1.10 and $1.20)
 ./tiocambio.sh --alert eur usd 1.10 1.20
 
-# Monitorar Libra → Real (alerta entre R$ 6.50 e R$ 7.00)
+# Monitor Pound → Real (alert between R$ 6.50 and R$ 7.00)
 ./tiocambio.sh --alert gbp brl 6.5 7.0
 
-# Monitorar Bitcoin → Dólar (alerta entre $90k e $100k)
+# Monitor Bitcoin → Dollar (alert between $90k and $100k)
 ./tiocambio.sh --alert btc usd 90000 100000
 ```
 
-**Como funciona:**
-- O script verifica a taxa de conversão a cada 60 segundos
-- Quando a taxa está **DENTRO** da faixa, emite um alerta sonoro 🔔
-- Quando a taxa está **FORA** da faixa, mostra apenas o status
-- Pressione `Ctrl+C` para parar o monitoramento
-- Funciona com TODAS as 12 moedas suportadas (incluindo Bitcoin)
-
-**Exemplo de saída:**
-```
-==========================================
-💱  ALERTA DE CONVERSÃO DE MOEDAS
-==========================================
-
-Conversão: 💵 Dólar Americano → 🇧🇷 Real Brasileiro
-Faixa de alerta: 5.0 - 5.5
-Intervalo de verificação: 60s
-
-Pressione Ctrl+C para parar o monitoramento
-==========================================
-
-🔔 [04/12/2025 16:20:21] ALERTA! 1 💵 USD = 🇧🇷 5.32 BRL (DENTRO DA FAIXA)
-⏱️  [04/12/2025 16:21:21] 1 💵 USD = 🇧🇷 5.33 BRL (DENTRO DA FAIXA)
-```
-
-**Executar em background:**
+**Run in background:**
 ```bash
-# Deixe o monitoramento rodando em background
+# Leave monitoring running in background
 nohup ./tiocambio.sh --alert usd brl 5.0 5.5 > usd_alert.log 2>&1 &
 
-# Verificar o log
+# Check the log
 tail -f usd_alert.log
 
-# Parar o monitoramento
+# Stop monitoring
 pkill -f "tiocambio.sh --alert"
 ```
 
-### Modo 6: Ver ajuda
+### Mode 6: View help
 
 ```bash
 ./tiocambio.sh --help
 ```
 
-## 📖 Lista Completa de Moedas Suportadas
+## 📖 Complete List of Supported Currencies
 
-### Moedas Base Disponíveis
+### Available Base Currencies
 
-Você pode usar qualquer uma destas moedas como base:
+You can use any of these currencies as base:
 
-| Flag | Moeda | Emoji |
-|------|-------|-------|
-| `-brl` | Real Brasileiro | 🇧🇷 |
-| `-usd` | Dólar Americano | 💵 |
+| Flag | Currency | Emoji |
+|------|----------|-------|
+| `-brl` | Brazilian Real | 🇧🇷 |
+| `-usd` | US Dollar | 💵 |
 | `-eur` | Euro | 💶 |
-| `-gbp` | Libra Esterlina | 💷 |
-| `-jpy` | Iene Japonês | 💴 |
-| `-cny` | Yuan Chinês | 🇨🇳 |
-| `-chf` | Franco Suíço | 🇨🇭 |
-| `-cad` | Dólar Canadense | 🇨🇦 |
-| `-aud` | Dólar Australiano | 🇦🇺 |
-| `-ars` | Peso Argentino | 🇦🇷 |
-| `-pyg` | Guarani Paraguaio | 🇵🇾 |
+| `-gbp` | British Pound | 💷 |
+| `-jpy` | Japanese Yen | 💴 |
+| `-cny` | Chinese Yuan | 🇨🇳 |
+| `-chf` | Swiss Franc | 🇨🇭 |
+| `-cad` | Canadian Dollar | 🇨🇦 |
+| `-aud` | Australian Dollar | 🇦🇺 |
+| `-ars` | Argentine Peso | 🇦🇷 |
+| `-pyg` | Paraguayan Guarani | 🇵🇾 |
 | `-btc` | Bitcoin | ₿ |
 
-### Como Usar as Moedas
+## 🔧 APIs Used
 
-**Formato de conversão:**
-```bash
-./tiocambio.sh -<moeda_origem> <moeda_destino> <valor>
-```
-
-**Exemplos:**
-```bash
-# Real para qualquer moeda
-./tiocambio.sh -brl usd 100    # BRL → USD
-./tiocambio.sh -brl eur 100    # BRL → EUR
-./tiocambio.sh -brl gbp 100    # BRL → GBP
-
-# Dólar para qualquer moeda
-./tiocambio.sh -usd brl 100    # USD → BRL
-./tiocambio.sh -usd eur 100    # USD → EUR
-./tiocambio.sh -usd jpy 100    # USD → JPY
-
-# Entre moedas estrangeiras
-./tiocambio.sh -eur gbp 100    # EUR → GBP
-./tiocambio.sh -gbp jpy 100    # GBP → JPY
-./tiocambio.sh -cad aud 100    # CAD → AUD
-
-# Conversões com Bitcoin
-./tiocambio.sh -btc brl 0.01   # BTC → BRL
-./tiocambio.sh -brl btc 5000   # BRL → BTC
-./tiocambio.sh -usd btc 1000   # USD → BTC
-```
-
-## 🔧 APIs Utilizadas
-
-O script utiliza três APIs públicas e gratuitas:
+The script uses three public and free APIs:
 
 1. **ExchangeRate-API** (https://exchangerate-api.com)
-   - Cotações oficiais das principais moedas tradicionais
-   - Sem necessidade de registro ou API key
-   - Atualização em tempo real
+   - Official quotes for major traditional currencies
+   - No registration or API key required
+   - Real-time updates
 
 2. **AwesomeAPI** (https://economia.awesomeapi.com.br)
-   - Cotação do dólar paralelo/turismo brasileiro
-   - API brasileira especializada em mercado financeiro
+   - Brazilian parallel/tourism dollar quotation
+   - Brazilian API specialized in financial market
 
 3. **CoinGecko API** (https://www.coingecko.com)
-   - Cotações de Bitcoin em tempo real
-   - Suporte a múltiplas moedas fiat
-   - Gratuita e sem necessidade de API key
+   - Real-time Bitcoin quotes
+   - Support for multiple fiat currencies
+   - Free and no API key required
 
-## 📝 Exemplos de Uso Prático
+## 📝 Practical Usage Examples
 
-### Usando a Interface de Terminal (TUI) - RECOMENDADO!
+### Using the Terminal Interface (TUI) - RECOMMENDED!
 
-A forma mais prática de usar o Tio Câmbio é através da TUI (Terminal User Interface):
+The most practical way to use Tio Câmbio is through the TUI (Terminal User Interface):
 
 ```bash
-# Iniciar a interface de terminal
+# Start terminal interface
 ./tiocambio_tui.sh
 ```
 
-**Por que usar a TUI?**
-- ✨ Interface linda com bordas e cores
-- ⚡ Rápida e leve (só Bash!)
-- 🎯 Navegação intuitiva com setas
-- 🖥️ Funciona em qualquer terminal
-- 🔧 Nenhuma dependência externa
-- 🌐 Perfeita para SSH e servidores remotos
+**Why use the TUI?**
+- ✨ Beautiful interface with borders and colors
+- ⚡ Fast and lightweight (Bash only!)
+- 🎯 Intuitive arrow navigation
+- 🖥️ Works in any terminal
+- 🔧 No external dependencies
+- 🌐 Perfect for SSH and remote servers
 
-**Como navegar na TUI:**
-1. Use as setas ↑↓ para navegar
-2. Pressione ENTER para selecionar
-3. Use números (1-6) como atalhos
-4. Pressione ESC ou 'q' para sair
+**How to navigate the TUI:**
+1. Use arrow keys ↑↓ to navigate
+2. Press ENTER to select
+3. Use numbers (1-6) as shortcuts
+4. Press ESC or 'q' to exit
 
-### Usando a Interface Gráfica (GUI)
+**How to input values in the TUI:**
+When making conversions, you can type the value in any format:
+- ✅ `1000` - Numbers only
+- ✅ `1000.50` - American format (period decimal)
+- ✅ `1.000,50` - Brazilian format (period thousands, comma decimal)
+- ✅ `1,000.50` - International format (comma thousands, period decimal)
+- ✅ `1 000,50` - European format (space thousands, comma decimal)
 
-Se preferir uma janela gráfica tradicional:
+The system **automatically normalizes** any format for correct calculation!
+
+### Using the Graphical Interface (GUI)
+
+If you prefer a traditional graphical window:
 
 ```bash
-# Iniciar a interface gráfica
+# Start graphical interface
 ./run_gui.sh
 
-# Ou diretamente
+# Or directly
 python3 tiocambio_gui.py
 ```
 
-**Vantagens da GUI:**
-- Interface visual com janelas
-- Tabs organizadas
-- Ideal para desktop
-- Requer Python + Tkinter
+**GUI Advantages:**
+- Visual interface with windows
+- Organized tabs
+- Ideal for desktop
+- Requires Python + Tkinter
 
-### Calcular custo de viagem
+### Calculate travel costs
 
 ```bash
-# Quanto preciso em reais para ter 1000 dólares?
+# How much in reais do I need to have 1000 dollars?
 ./tiocambio.sh -usd brl 1000
 
-# Quanto vou ter em euros com 5000 reais?
+# How much will I have in euros with 5000 reais?
 ./tiocambio.sh -brl eur 5000
 ```
 
-### Comparar preços internacionais
+### Compare international prices
 
 ```bash
-# Um produto custa 299 dólares, quanto é em reais?
+# A product costs 299 dollars, how much is it in reais?
 ./tiocambio.sh -usd brl 299
 
-# Um produto custa 199 libras, quanto é em reais?
+# A product costs 199 pounds, how much is it in reais?
 ./tiocambio.sh -gbp brl 199
 ```
 
-### Análise de mercado
+### Market analysis
 
 ```bash
-# Ver todas as cotações em relação ao Real
+# View all quotes relative to Real
 ./tiocambio.sh -brl
 
-# Ver todas as cotações em relação ao Dólar
+# View all quotes relative to Dollar
 ./tiocambio.sh -usd
 
-# Ver todas as cotações em relação ao Euro
+# View all quotes relative to Euro
 ./tiocambio.sh -eur
 ```
 
-### Comparar moedas sem usar Real
+### Compare currencies without using Real
 
 ```bash
-# Quanto vale 500 dólares em euros?
+# How much is 500 dollars worth in euros?
 ./tiocambio.sh -usd eur 500
 
-# Quanto vale 1000 libras em ienes?
+# How much is 1000 pounds worth in yen?
 ./tiocambio.sh -gbp jpy 1000
 ```
 
-### Investir em Bitcoin
+### Invest in Bitcoin
 
 ```bash
-# Ver cotação atual do Bitcoin em reais
+# View current Bitcoin quotation in reais
 ./tiocambio.sh -brl
 
-# Quanto custa 0.01 Bitcoin em reais?
+# How much does 0.01 Bitcoin cost in reais?
 ./tiocambio.sh -btc brl 0.01
 
-# Quantos Bitcoins posso comprar com 10000 reais?
+# How many Bitcoins can I buy with 10000 reais?
 ./tiocambio.sh -brl btc 10000
 
-# Ver todas as moedas em relação ao Bitcoin
+# View all currencies relative to Bitcoin
 ./tiocambio.sh -btc
 ```
 
-### Configurar alertas de preço do Bitcoin
+### Configure Bitcoin price alerts
 
 ```bash
-# Alerta quando Bitcoin atingir entre R$ 480k e R$ 520k
+# Alert when Bitcoin reaches between R$ 480k and R$ 520k
 ./tiocambio.sh --btc-alert brl 480000 520000
 
-# Alerta para oportunidade de compra (preço baixo)
+# Alert for buying opportunity (low price)
 ./tiocambio.sh --btc-alert usd 85000 90000
 
-# Alerta para venda (preço alto)
+# Alert for selling (high price)
 ./tiocambio.sh --btc-alert brl 500000 550000
 
-# Deixe rodando em background para monitoramento contínuo
+# Leave running in background for continuous monitoring
 nohup ./tiocambio.sh --btc-alert brl 480000 520000 > btc_alert.log 2>&1 &
 ```
 
-### Monitorar taxas de câmbio específicas
+### Monitor specific exchange rates
 
 ```bash
-# Alerta quando o Dólar estiver barato para comprar
+# Alert when Dollar is cheap to buy
 ./tiocambio.sh --alert usd brl 5.0 5.3
 
-# Alerta quando o Euro estiver favorável
+# Alert when Euro is favorable
 ./tiocambio.sh --alert eur brl 6.0 6.3
 
-# Monitorar oportunidade de arbitragem EUR/USD
+# Monitor EUR/USD arbitrage opportunity
 ./tiocambio.sh --alert eur usd 1.15 1.18
 
-# Monitorar preço do Guarani para viagem ao Paraguai
+# Monitor Guarani price for trip to Paraguay
 ./tiocambio.sh --alert pyg brl 0.0007 0.0008
 
-# Múltiplos alertas simultâneos em background
+# Multiple simultaneous alerts in background
 nohup ./tiocambio.sh --alert usd brl 5.0 5.5 > usd_alert.log 2>&1 &
 nohup ./tiocambio.sh --alert eur brl 6.0 6.5 > eur_alert.log 2>&1 &
 nohup ./tiocambio.sh --btc-alert brl 480000 520000 > btc_alert.log 2>&1 &
 ```
 
-## 🤝 Contribuindo
+## 🤝 Contributing
 
-Contribuições são bem-vindas! Sinta-se à vontade para:
+Contributions are welcome! Feel free to:
 
-1. Fazer um Fork do projeto
-2. Criar uma branch para sua feature (`git checkout -b feature/NovaFuncionalidade`)
-3. Commit suas mudanças (`git commit -m 'Adiciona nova funcionalidade'`)
-4. Push para a branch (`git push origin feature/NovaFuncionalidade`)
-5. Abrir um Pull Request
+1. Fork the project
+2. Create a branch for your feature (`git checkout -b feature/NewFeature`)
+3. Commit your changes (`git commit -m 'Add new feature'`)
+4. Push to the branch (`git push origin feature/NewFeature`)
+5. Open a Pull Request
 
-### Ideias para contribuição:
-- Adicionar mais criptomoedas (Ethereum, Litecoin, etc.)
-- Adicionar mais moedas tradicionais
-- Implementar cache de cotações
-- Adicionar gráficos de histórico na GUI
-- ✅ ~~Criar interface gráfica (GUI)~~ (Implementado!)
-- Adicionar notificações de variação cambial
-- ✅ ~~Adicionar alertas de preço para Bitcoin~~ (Implementado!)
-- ✅ ~~Adicionar alertas para qualquer par de moedas~~ (Implementado!)
-- Adicionar alertas via email ou Telegram
-- Permitir customizar intervalo de verificação dos alertas na GUI
-- Salvar histórico de preços em arquivo CSV
-- Adicionar modo "alerta de queda/subida" (alerta quando preço cair X% ou subir Y%)
-- Melhorar a GUI com gráficos de tendência
-- Adicionar modo escuro (dark mode) na GUI
-- Criar versão mobile (React Native ou Flutter)
+### Contribution ideas:
+- Add more cryptocurrencies (Ethereum, Litecoin, etc.)
+- Add more traditional currencies
+- Implement quote caching
+- Add history charts in GUI
+- ✅ ~~Create graphical interface (GUI)~~ (Implemented!)
+- Add exchange rate variation notifications
+- ✅ ~~Add price alerts for Bitcoin~~ (Implemented!)
+- ✅ ~~Add alerts for any currency pair~~ (Implemented!)
+- Add alerts via email or Telegram
+- Allow customizing alert check interval in GUI
+- Save price history to CSV file
+- Add "drop/rise alert" mode (alert when price drops X% or rises Y%)
+- Improve GUI with trend charts
+- Add dark mode in GUI
+- Create mobile version (React Native or Flutter)
 
-## 📄 Licença
+## 📄 License
 
-Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
+This project is under the MIT license. See the `LICENSE` file for more details.
 
-## ⚠️ Aviso Legal
+## ⚠️ Disclaimer
 
-Este script fornece cotações de moedas apenas para fins informativos. As taxas de câmbio podem variar e não devem ser usadas como única fonte para transações financeiras importantes. Sempre consulte fontes oficiais e instituições financeiras para transações reais.
+This script provides currency quotes for informational purposes only. Exchange rates may vary and should not be used as the sole source for important financial transactions. Always consult official sources and financial institutions for actual transactions.
 
-## 👤 Autor
+## 👤 Author
 
-Desenvolvido por Juliano Landim : Empresa: JAL Software
+Developed by Juliano Landim : Company: JAL Software
 
-## 🌟 Mostre seu apoio
+## 🌟 Show your support
 
-Se este projeto foi útil para você, considere dar uma ⭐️ no repositório!
+If this project was useful to you, consider giving it a ⭐️ on the repository!
 
-## 📞 Contato
+## 💝 Support
+
+If you're enjoying this project and it has been useful to you, consider supporting us with a donation via PIX:
+
+**PIX Key:** `+5517999727552`
+
+Your contribution helps keep the project active and develop new features! 🙏
+
+## 📞 Contact
 
 - GitHub: [@julianolandim](https://github.com/julianolandim)
 - Email: ibgguaira@gmial.com
 
 ---
 
-**Última atualização:** Dezembro 2025
+**Last update:** December 2025

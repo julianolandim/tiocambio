@@ -111,6 +111,15 @@ get_currency_info() {
     esac
 }
 
+# Função para formatar valores monetários seguindo padrão de cada país
+format_currency() {
+    local value=$1
+    local currency=$2
+
+    # Usar script Python para formatação (mais confiável)
+    python3 ./format_money.py "$value" "$currency"
+}
+
 # Função para obter cotação de Bitcoin
 get_btc_rate() {
     local base_currency=$1
@@ -125,7 +134,8 @@ get_btc_rate() {
         if [ -n "$rate" ]; then
             base_info=$(get_currency_info $base_currency)
             base_symbol=$(echo $base_info | cut -d'|' -f1)
-            echo "₿ 1 Bitcoin = ${rate} ${base_symbol}"
+            formatted_rate=$(format_currency "$rate" "$base_currency")
+            echo "₿ 1 Bitcoin = ${formatted_rate} ${base_symbol}"
         else
             echo "❌ Erro ao obter cotação de Bitcoin"
         fi
@@ -156,7 +166,8 @@ get_exchange_rate() {
         if [ -n "$rate" ]; then
             base_info=$(get_currency_info $base_currency)
             base_symbol=$(echo $base_info | cut -d'|' -f1)
-            echo "$emoji 1 ${target_name} = ${rate} ${base_symbol}"
+            formatted_rate=$(format_currency "$rate" "$base_currency")
+            echo "$emoji 1 ${target_name} = ${formatted_rate} ${base_symbol}"
         else
             echo "❌ Erro ao obter cotação de ${target_name}"
         fi
@@ -197,10 +208,14 @@ convert_value() {
         if [ -n "$rate" ]; then
             if [ "$from" = "BTC" ]; then
                 result=$(echo "scale=2; $amount * $rate" | bc)
+                formatted_amount=$(format_currency "$amount" "BTC")
+                formatted_result=$(format_currency "$result" "$to")
             else
                 result=$(echo "scale=8; $amount * $rate" | bc)
+                formatted_amount=$(format_currency "$amount" "$from")
+                formatted_result=$(format_currency "$result" "BTC")
             fi
-            echo "$from_emoji $amount $from_name = $to_emoji $result $to_name"
+            echo "$from_emoji $formatted_amount $from_name = $to_emoji $formatted_result $to_name"
         else
             echo "❌ Erro ao obter taxa de conversão"
         fi
@@ -215,7 +230,9 @@ convert_value() {
 
         if [ -n "$rate" ]; then
             result=$(echo "scale=2; $amount * $rate" | bc)
-            echo "$from_emoji $amount $from_name = $to_emoji $result $to_name"
+            formatted_amount=$(format_currency "$amount" "$from")
+            formatted_result=$(format_currency "$result" "$to")
+            echo "$from_emoji $formatted_amount $from_name = $to_emoji $formatted_result $to_name"
         else
             echo "❌ Erro ao obter taxa de conversão"
         fi
@@ -261,8 +278,9 @@ btc_price_alert() {
             current_int=$(echo $current_price | cut -d'.' -f1)
 
             # Verifica se está dentro da faixa
+            formatted_price=$(format_currency "$current_price" "$currency_upper")
             if [ "$current_int" -ge "$min_price" ] && [ "$current_int" -le "$max_price" ]; then
-                echo "🔔 [$timestamp] ALERTA! Bitcoin: $currency_emoji $current_price $currency_name (DENTRO DA FAIXA)"
+                echo "🔔 [$timestamp] ALERTA! Bitcoin: $currency_emoji $formatted_price $currency_name (DENTRO DA FAIXA)"
                 # Emite beep (se suportado pelo terminal)
                 printf '\a'
             else
@@ -271,7 +289,7 @@ btc_price_alert() {
                 else
                     status="ACIMA"
                 fi
-                echo "⏱️  [$timestamp] Bitcoin: $currency_emoji $current_price $currency_name ($status da faixa)"
+                echo "⏱️  [$timestamp] Bitcoin: $currency_emoji $formatted_price $currency_name ($status da faixa)"
             fi
         else
             echo "❌ [$timestamp] Erro ao obter cotação do Bitcoin"
@@ -339,8 +357,9 @@ currency_pair_alert() {
         if [ -n "$current_rate" ]; then
             # Para comparação, pega apenas a parte inteira ou converte para escala comparável
             # Usa bc para comparação com decimais
+            formatted_rate=$(format_currency "$current_rate" "$to_upper")
             if [ "$(echo "$current_rate >= $min_price" | bc)" -eq 1 ] && [ "$(echo "$current_rate <= $max_price" | bc)" -eq 1 ]; then
-                echo "🔔 [$timestamp] ALERTA! 1 $from_emoji $from_upper = $to_emoji $current_rate $to_upper (DENTRO DA FAIXA)"
+                echo "🔔 [$timestamp] ALERTA! 1 $from_emoji $from_upper = $to_emoji $formatted_rate $to_upper (DENTRO DA FAIXA)"
                 # Emite beep (se suportado pelo terminal)
                 printf '\a'
             else
@@ -349,7 +368,7 @@ currency_pair_alert() {
                 else
                     status="ACIMA"
                 fi
-                echo "⏱️  [$timestamp] 1 $from_emoji $from_upper = $to_emoji $current_rate $to_upper ($status da faixa)"
+                echo "⏱️  [$timestamp] 1 $from_emoji $from_upper = $to_emoji $formatted_rate $to_upper ($status da faixa)"
             fi
         else
             echo "❌ [$timestamp] Erro ao obter taxa de conversão"
@@ -381,7 +400,8 @@ show_all_rates() {
 
         dolar_paralelo=$(curl -s "https://economia.awesomeapi.com.br/json/last/USD-BRL" | grep -o '"high":"[0-9.]*"' | head -1 | cut -d'"' -f4)
         if [ -n "$dolar_paralelo" ]; then
-            echo "💸 1 Dólar Paralelo (Turismo) = ${dolar_paralelo}"
+            formatted_paralelo=$(format_currency "$dolar_paralelo" "BRL")
+            echo "💸 1 Dólar Paralelo (Turismo) = ${formatted_paralelo}"
         fi
 
         get_exchange_rate "$base_currency" "CAD" "Dólar Canadense" "🇨🇦"
