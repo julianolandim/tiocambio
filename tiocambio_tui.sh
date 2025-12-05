@@ -53,17 +53,15 @@ draw_line() {
         clean="${clean//${BASH_REMATCH[0]}/}"
     done
 
-    # Contar emojis (cada emoji ocupa ~2 espaços visuais)
-    local emoji_count=$(echo -n "$clean" | grep -o '[🇧🇷💵💶💷💴🇨🇳🇨🇭🇨🇦🇦🇺🇦🇷🇵🇾₿📊💱🔔📈❓❌💰▶]' | wc -l | tr -d ' ')
+    # Usar printf para obter largura visual real (funciona com emojis)
+    local visual_width=$(printf "%s" "$clean" | wc -m | tr -d ' ')
 
-    # Comprimento base da string
-    local text_length=${#clean}
+    local padding=$(( (width - visual_width - 2) / 2 ))
+    local right_padding=$(( width - visual_width - padding - 2 ))
 
-    # Ajustar comprimento visual (emoji conta como 2 mas ocupa 1 char na string)
-    local visual_length=$((text_length + emoji_count))
-
-    local padding=$(( (width - visual_length - 2) / 2 ))
-    local right_padding=$(( width - visual_length - padding - 2 ))
+    # Garantir que padding não seja negativo
+    if [ $padding -lt 0 ]; then padding=0; fi
+    if [ $right_padding -lt 0 ]; then right_padding=0; fi
 
     echo -ne "${CYAN}║${RESET}"
     printf '%*s' "$padding" ""
@@ -142,45 +140,31 @@ flush_input() {
 # Função para ler tecla (usa variável global KEY_PRESSED)
 read_key() {
     local key=""
+    local seq=""
     KEY_PRESSED=""
 
-    # Ler primeiro caractere
+    # Ler até 3 caracteres (ESC + sequência)
     IFS= read -rsn1 key
 
-    # Detectar ESC ou setas
+    # Se for ESC, ler os próximos 2 caracteres juntos
     if [[ "$key" == $'\x1b' ]]; then
-        # Ler próximo byte - AUMENTAR TIMEOUT para macOS
-        local seq1=""
-        IFS= read -rsn1 -t 0.5 seq1 2>/dev/null
+        # Ler 2 caracteres de uma vez com timeout maior
+        IFS= read -rsn2 -t 1 seq 2>/dev/null
 
-        if [[ "$seq1" == "[" ]]; then
-            # Ler terceiro byte (A, B, C, D) - AUMENTAR TIMEOUT
-            local seq2=""
-            IFS= read -rsn1 -t 0.5 seq2 2>/dev/null
-
-            case "$seq2" in
-                'A') KEY_PRESSED="up" ;;
-                'B') KEY_PRESSED="down" ;;
-                'C') KEY_PRESSED="right" ;;
-                'D') KEY_PRESSED="left" ;;
-                *) KEY_PRESSED="esc" ;;
-            esac
-        elif [[ "$seq1" == "O" ]]; then
-            # Ler terceiro byte (A, B, C, D) - modo alternativo
-            local seq2=""
-            IFS= read -rsn1 -t 0.5 seq2 2>/dev/null
-
-            case "$seq2" in
-                'A') KEY_PRESSED="up" ;;
-                'B') KEY_PRESSED="down" ;;
-                'C') KEY_PRESSED="right" ;;
-                'D') KEY_PRESSED="left" ;;
-                *) KEY_PRESSED="esc" ;;
-            esac
-        else
-            # ESC puro
-            KEY_PRESSED="esc"
-        fi
+        # Processar sequência completa
+        case "$seq" in
+            '[A'|'OA') KEY_PRESSED="up" ;;
+            '[B'|'OB') KEY_PRESSED="down" ;;
+            '[C'|'OC') KEY_PRESSED="right" ;;
+            '[D'|'OD') KEY_PRESSED="left" ;;
+            '[3~') KEY_PRESSED="delete" ;;
+            '[H') KEY_PRESSED="home" ;;
+            '[F') KEY_PRESSED="end" ;;
+            *)
+                # Se não conseguiu ler 2 chars, é ESC puro
+                KEY_PRESSED="esc"
+                ;;
+        esac
     elif [[ "$key" == "" ]]; then
         KEY_PRESSED="enter"
     elif [[ "$key" == " " ]]; then
