@@ -8,21 +8,22 @@ Conversor de Moedas e Sistema de Alertas
 
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
-import subprocess
 import threading
 import json
 from datetime import datetime
 import os
+import sys
+from version import __version__, __app_name__
+from currency_api import get_rates, convert
 
 class TioCambioGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("💰 TIO CÂMBIO - Conversor de Moedas")
+        self.root.title(f"💰 {__app_name__} - Conversor de Moedas v{__version__}")
         self.root.geometry("800x600")
         self.root.resizable(True, True)
 
-        # Caminho do script bash
-        self.script_path = os.path.join(os.path.dirname(__file__), "tiocambio.sh")
+        # Não precisa mais do script bash - usa API Python diretamente
 
         # Dicionário de moedas
         self.currencies = {
@@ -242,18 +243,21 @@ class TioCambioGUI:
 
         def run_command():
             try:
-                result = subprocess.run(
-                    [self.script_path, f"-{base}"],
-                    capture_output=True,
-                    text=True,
-                    timeout=30
-                )
-
+                rates = get_rates(base.upper())
                 self.quotes_text.delete(1.0, tk.END)
-                if result.returncode == 0:
-                    self.quotes_text.insert(tk.END, result.stdout)
+
+                if rates:
+                    output = f"💰 Cotações em relação a {self.currencies[base.upper()]}\n"
+                    output += "=" * 60 + "\n\n"
+
+                    for code, name in self.currencies.items():
+                        if code != base.upper() and code in rates:
+                            rate = rates[code]
+                            output += f"{name}: {rate:.6f}\n"
+
+                    self.quotes_text.insert(tk.END, output)
                 else:
-                    self.quotes_text.insert(tk.END, f"Erro: {result.stderr}")
+                    self.quotes_text.insert(tk.END, "Erro ao buscar cotações. Verifique sua conexão.")
             except Exception as e:
                 self.quotes_text.delete(1.0, tk.END)
                 self.quotes_text.insert(tk.END, f"Erro ao buscar cotações: {str(e)}")
@@ -279,19 +283,17 @@ class TioCambioGUI:
 
         def run_command():
             try:
-                result = subprocess.run(
-                    [self.script_path, f"-{from_curr}", to_curr, amount],
-                    capture_output=True,
-                    text=True,
-                    timeout=30
-                )
+                amount_float = float(amount)
+                result = convert(amount_float, from_curr.upper(), to_curr.upper())
 
-                if result.returncode == 0:
-                    # Extrair apenas a linha de resultado
-                    output = result.stdout.strip()
+                if result is not None:
+                    # Formatar resultado
+                    from_name = self.currencies.get(from_curr.upper(), from_curr.upper())
+                    to_name = self.currencies.get(to_curr.upper(), to_curr.upper())
+                    output = f"{amount_float:.2f} {from_name} = {result:.2f} {to_name}"
                     self.convert_result_var.set(output)
                 else:
-                    self.convert_result_var.set(f"Erro: {result.stderr}")
+                    self.convert_result_var.set("Erro ao converter. Verifique sua conexão.")
             except Exception as e:
                 self.convert_result_var.set(f"Erro: {str(e)}")
 

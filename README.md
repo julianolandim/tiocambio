@@ -1,6 +1,6 @@
 # 💰 Currency + Bitcoin Converter
 
-**English** | **[Português](README-ptbr.md)**
+**English** | **[Português](README-ptbr.md)** | 📜 [License](LICENSE)
 
 ---
 

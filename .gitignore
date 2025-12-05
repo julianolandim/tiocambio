@@ -105,3 +105,16 @@ yarn-error.log*
 
 # Processos em background
 *.pid
+
+# Arquivos de instalação e build do macOS
+*.dmg
+*.app
+*.pkg
+install/mac/*.dmg
+venv_arm64/
+venv_x86_64/
+build_arm64/
+build_x86_64/
+dmg_temp_*/
+*.spec
+*.icns

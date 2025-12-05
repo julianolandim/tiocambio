@@ -1,6 +1,6 @@
 # 💰 Conversor de Moedas + Bitcoin
 
-**[English](README.md)** | **Português**
+**[English](README.md)** | **Português** | 📜 [Licença](LICENSE)
 
 ---
 
