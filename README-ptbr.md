@@ -776,7 +776,7 @@ Contribuições são bem-vindas! Sinta-se à vontade para:
 
 ## 📄 Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
+Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes em inglês e português.
 
 ## ⚠️ Aviso Legal
 
@@ -802,6 +802,7 @@ Sua contribuição ajuda a manter o projeto ativo e a desenvolver novas funciona
 
 - GitHub: [@julianolandim](https://github.com/julianolandim)
 - Email: ibgguaira@gmial.com
+- WhatsApp: +55 17 9 9972-7552
 
 ---
 

@@ -659,7 +659,7 @@ Contributions are welcome! Feel free to:
 
 ## 📄 License
 
-This project is under the MIT license. See the `LICENSE` file for more details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details in both English and Portuguese.
 
 ## ⚠️ Disclaimer
 
@@ -685,6 +685,7 @@ Your contribution helps keep the project active and develop new features! 🙏
 
 - GitHub: [@julianolandim](https://github.com/julianolandim)
 - Email: ibgguaira@gmial.com
+- WhatsApp: +55 17 9 9972-7552
 
 ---
 
